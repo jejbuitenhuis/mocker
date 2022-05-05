@@ -1,4 +1,4 @@
-table TestTable {
+table TestTable{
 	some_column int $primary() #row(),
 	can_be_empty int $null(25) #number(0, 1000)
 }

@@ -115,36 +115,8 @@ impl Table { // {{{
 		}
 	}
 
-	fn get_primary_keys(&self) -> Vec<&Column> {
-		let mut columns = vec![];
-
-		for column in self.columns.iter() {
-			if column.constraints.contains(&Constraint::Primary) {
-				columns.push(column);
-			}
-		}
-
-		columns
-	}
-
 	pub fn add_column(&mut self, column: Column) {
 		self.columns.push(column);
-	}
-
-	pub fn link(&mut self, to_table: &Table) {
-		let mut columns = vec![];
-
-		for column in to_table.columns.iter() {
-			for constraint in column.constraints.iter() {
-				if constraint.eq(&Constraint::Primary) {
-					columns.push(column);
-				}
-			}
-		}
-
-		for column in columns.iter() {
-			// if column is named `test`, add a column `to_table.name`_test
-		}
 	}
 }
 // }}}

@@ -14,6 +14,10 @@ pub mod config;
 pub mod errors;
 mod pointer;
 
+const CHAR_CONSTRAINT: char = '$';
+const CHAR_PROVIDER: char = '#';
+const KEYWORD_TABLE: &str = "table";
+
 pub struct Parser {
 	config: Config,
 	pointer: Pointer,
@@ -31,17 +35,10 @@ impl Parser {
 	} // }}}
 
 	fn parse_whitespace(&mut self) -> Result<(), ParserError> { // {{{
-		loop {
-			let next = self.pointer.peek()?;
-
-			// a ',' acts as a line break in our language
-			if !( next.is_whitespace() || next == &',' ) {
-				break;
-			}
-
+		while self.pointer.peek()?.is_whitespace() {
 			self.pointer.next()?;
 		}
-		
+
 		Ok(())
 	} // }}}
 
@@ -84,13 +81,7 @@ impl Parser {
 	fn parse_columns(&mut self) -> Result<Vec<Column>, ParserError> { // {{{
 		let mut result = vec![];
 
-		match self.parse_whitespace() {
-			Err(e) => match e {
-				ParserError::EOF => return Ok(result),
-				_ => return Err(e),
-			},
-			_ => (),
-		};
+		self.parse_whitespace()?;
 
 		let next = self.pointer.next()?;
 
@@ -101,6 +92,8 @@ impl Parser {
 			) );
 		}
 
+		// loop for parsing a whole column, so from the start (column name) to
+		// the end (a `,` or `}`)
 		loop {
 			self.parse_whitespace()?;
 
@@ -118,28 +111,34 @@ impl Parser {
 			let mut column_provider: Option<Provider> = None;
 			let mut char = self.pointer.next()?;
 
+			// loop for parsing the constraints and provider. It loops until it
+			// gets to the end of the column or the end of the table
+			// definition (a `}`)
 			loop {
 				match char {
 					'}' | ',' => break,
 					c if c.is_whitespace() => {}, // skip to next character
-					'$' => {
-						column_constraints.push( self.parse_constraint()? )
-					},
-					'#' if column_provider.is_some() => return Err(ParserError::MultipleProviders),
-					'#' if column_provider.is_none() => {
-						column_provider = Some( self.parse_provider()? )
-					},
+
+					CHAR_CONSTRAINT => column_constraints.push( self.parse_constraint()? ),
+
+					// only one provider is allowed
+					CHAR_PROVIDER if column_provider.is_some() => return Err(ParserError::MultipleProviders),
+					CHAR_PROVIDER if column_provider.is_none() =>
+						column_provider = Some( self.parse_provider()? ),
+
 					c => {
-						println!("Found a weird char:{}", c);
-						return Err( ParserError::Unexpected( c.to_string(), "¯\\_(ツ)_/¯".to_string() ) );
+						return Err( ParserError::Unexpected(
+							c.to_string(),
+							"¯\\_(ツ)_/¯".to_string()
+						) );
 					}
 				}
 
 				char = self.pointer.next()?;
 			}
 
-			let column_provider = column_provider.ok_or( ParserError::NoProvider )?;
-			
+			let column_provider = column_provider.ok_or(ParserError::NoProvider)?;
+
 			let mut column = Column::new(column_name, column_type, column_provider);
 
 			for constraint in column_constraints {
@@ -149,7 +148,7 @@ impl Parser {
 			result.push(column);
 
 			// a `,` or `}` was found in the loop above, but we don't know
-			// which one if it is the `}`, we break out of the loop because we
+			// which one. If it is the `}`, we break out of the loop because we
 			// found all of the columns. If it wasn't a `{`, we can assume it
 			// was a `,` (we filter all other characters above) and we can look
 			// for the next column
@@ -164,31 +163,29 @@ impl Parser {
 	fn parse_table(&mut self) -> Result<Option<Table>, ParserError> { // {{{
 		match self.parse_whitespace() {
 			Err(e) => match e {
-				ParserError::EOF => return Ok(None),
+				ParserError::EOF => return Ok(None), // no more tables follow
 				_ => return Err(e),
 			},
 			_ => (),
 		};
 
 		// "table" keyword
-		let keyword = match self.pointer.next_multiple(5) {
+		let keyword = match self.pointer.next_multiple( KEYWORD_TABLE.len() ) {
 			Ok(k) => k,
 			Err(e) => match e {
-				ParserError::EOF => return Ok(None), // no more tables present
+				ParserError::EOF => return Ok(None), // no more tables follow
 				_ => return Err(e),
 			},
 		};
 
-		if keyword != "table" {
-			return Err( ParserError::Unexpected( keyword, "table".to_string() ) )
+		if keyword != KEYWORD_TABLE {
+			return Err( ParserError::Unexpected( keyword, KEYWORD_TABLE.to_string() ) )
 		}
 
 		self.parse_whitespace()?;
 
-		let table_name = self.pointer.next_until( |c| c.is_whitespace() )?;
-
+		let table_name = self.pointer.next_until( |c| c.is_whitespace() || c == &'{' )?;
 		let mut table = Table::new(table_name);
-
 		let columns = self.parse_columns()?;
 
 		for column in columns {
