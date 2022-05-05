@@ -1,0 +1,5 @@
+set autoindent noexpandtab
+
+source vim/mock.vim
+
+autocmd BufNewFile,BufRead *.mock set ft=mock

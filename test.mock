@@ -1,0 +1,9 @@
+table TestTable {
+	some_column int $primary() #row(),
+	can_be_empty int $null(25) #number(0, 1000)
+}
+
+table SecondTable {
+	id int $link("TestTable\"some_column") #mock(),
+	another_column string #name()
+}
