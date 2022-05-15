@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 pub enum ProviderError {
 	/// Used when a provider is already registered under the name {0}
 	AlreadyRegistered(String),
