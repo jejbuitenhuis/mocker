@@ -11,8 +11,10 @@ impl ProviderImpl for RowProvider {
 		}
 	}
 
-	fn reset(&mut self) {
+	fn reset(&mut self, _arguments: &Vec<String>) -> Result<(), ProviderError> {
 		self.curr_count = 1;
+
+		Ok(())
 	}
 
 	fn provide(&mut self) -> Result<String, ProviderError> {

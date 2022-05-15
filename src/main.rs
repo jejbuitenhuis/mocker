@@ -25,11 +25,13 @@ fn main() {
 
 	provider_registry.init_providers(args.row_count);
 
-	let row_provider = provider_registry
-		.get("row")
+	let number_provider = provider_registry
+		.get("number")
 		.unwrap();
 
+	number_provider.reset( &vec![ "0".to_string(), "1000".to_string() ] ).unwrap();
+
 	for _ in 0..100 {
-		println!("Result: {:?}", row_provider.provide());
+		println!("Result: {:?}", number_provider.provide());
 	}
 }
