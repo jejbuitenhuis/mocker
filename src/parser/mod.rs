@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, path::{Path, PathBuf}};
 
 use crate::{
 	parser::{
@@ -24,8 +24,8 @@ pub struct Parser {
 }
 
 impl Parser {
-	pub fn new(file_path: String) -> Result<Parser, ParserError> { // {{{
-		let file_content = fs::read_to_string(file_path)
+	pub fn new(file: PathBuf) -> Result<Parser, ParserError> { // {{{
+		let file_content = fs::read_to_string(file)
 			.map_err( |e| ParserError::FileError( e.to_string() ) )?;
 
 		Ok(Parser {
