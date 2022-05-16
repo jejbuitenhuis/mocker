@@ -19,7 +19,7 @@ impl ProviderImpl for NumberProvider {
 
 	fn reset(&mut self, arguments: &Vec<String>) -> Result<(), ProviderError> {
 		if let Some(min) = arguments.get(0) {
-			self.min = min.parse()
+			self.min = min.parse::<i64>()
 				.map_err( |_| ProviderError::UnexpectedArgument(
 					arguments[0].clone(),
 					"Number".to_string()
@@ -29,7 +29,7 @@ impl ProviderImpl for NumberProvider {
 		}
 
 		if let Some(max) = arguments.get(1) {
-			self.max = max.parse()
+			self.max = max.parse::<i64>()
 				.map_err( |_| ProviderError::UnexpectedArgument(
 					arguments[1].clone(),
 					"Number".to_string()
@@ -46,6 +46,7 @@ impl ProviderImpl for NumberProvider {
 	}
 }
 
+#[cfg(test)]
 mod tests {
 	use super::*;
 

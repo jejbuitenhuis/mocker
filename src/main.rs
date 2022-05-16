@@ -26,10 +26,8 @@ fn main() {
 	provider_registry.init_providers(args.row_count);
 
 	let number_provider = provider_registry
-		.get("number")
+		.get("gender")
 		.unwrap();
-
-	number_provider.reset( &vec![ "0".to_string(), "1000".to_string() ] ).unwrap();
 
 	for _ in 0..100 {
 		println!("Result: {:?}", number_provider.provide());
