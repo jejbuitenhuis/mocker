@@ -1,17 +1,30 @@
-use rand::{prelude::ThreadRng, Rng};
+use rand::{
+	rngs::mock::StepRng,
+	prelude::{Rng, SliceRandom}, RngCore
+};
 
 use crate::provider::{ProviderImpl, ProviderError};
 
 pub struct NumberProvider {
-	rng: ThreadRng,
+	rng: Box<dyn RngCore>,
 	min: i64,
 	max: i64,
 }
 
 impl ProviderImpl for NumberProvider {
+	#[cfg( not(test) )]
 	fn new() -> Self {
 		NumberProvider {
-			rng: rand::thread_rng(),
+			rng: Box::new( rand::thread_rng() ),
+			min: 0,
+			max: i64::MAX,
+		}
+	}
+
+	#[cfg(test)]
+	fn new() -> Self {
+		NumberProvider {
+			rng: Box::new( StepRng::new(0, 1) ),
 			min: 0,
 			max: i64::MAX,
 		}
@@ -51,6 +64,20 @@ mod tests {
 	use super::*;
 
 	const ROW_COUNT: u64 = 1000;
+
+	#[test]
+	fn test_provide_should_return_a_number() -> Result<(), ProviderError> { // {{{
+		let mut sut = NumberProvider::new();
+
+		sut.init(ROW_COUNT)?;
+		sut.reset( &vec![] )?;
+
+		let result = sut.provide()?;
+
+		assert_eq!( "0".to_string(), result );
+
+		Ok(())
+	} // }}}
 
 	#[test]
 	fn test_reset_should_set_minimum_to_10() -> Result<(), ProviderError> { // {{{
