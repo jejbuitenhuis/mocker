@@ -4,6 +4,6 @@ table TestTable{
 }
 
 table SecondTable {
-	id int $link("TestTable\"some_column") #mock(),
+	id int #link("TestTable.some_column"),
 	another_column string #name()
 }
