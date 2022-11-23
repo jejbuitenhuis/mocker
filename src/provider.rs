@@ -13,7 +13,7 @@ pub enum ProviderError {
 pub trait ProviderImpl {
 	/// Used to create a new provider.
 	fn new() -> Self where Self: Sized;
-	
+
 	/// Gets called one time, when initializing the providers. This method can
 	/// be used to, for example, initialize a list of items that `provide()`
 	/// can return.
@@ -68,9 +68,11 @@ impl ProviderRegistry {
 		Ok(())
 	}
 
-	pub fn init_providers(&mut self, row_count: u64) {
+	pub fn init_providers(&mut self, row_count: u64) -> Result<(), ProviderError> {
 		for (_, provider) in &mut self.providers {
-			provider.init(row_count);
+			provider.init(row_count)?;
 		}
+
+		Ok(())
 	}
 }

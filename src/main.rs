@@ -3,7 +3,10 @@ use clap::Parser as CliParser;
 use crate::{
 	arguments::Args,
 	parser::Parser,
-	provider::ProviderRegistry,
+	provider::{
+		ProviderError,
+		ProviderRegistry,
+	},
 	register_providers::register_providers,
 };
 
@@ -13,7 +16,7 @@ mod provider;
 mod providers;
 mod register_providers;
 
-fn main() {
+fn main() -> Result<(), ProviderError> {
 	let args = Args::parse();
 	let mut parser = Parser::new(args.config).unwrap();
 	let config = parser.parse().unwrap();
@@ -23,13 +26,15 @@ fn main() {
 
 	register_providers(&mut provider_registry);
 
-	provider_registry.init_providers(args.row_count);
+	provider_registry.init_providers(args.row_count)?;
 
-	let number_provider = provider_registry
+	let gender_provider = provider_registry
 		.get("gender")
 		.unwrap();
 
 	for _ in 0..100 {
-		println!("Result: {:?}", number_provider.provide());
+		println!("Result: {:?}", gender_provider.provide());
 	}
+
+	Ok(())
 }
