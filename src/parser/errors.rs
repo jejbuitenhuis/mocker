@@ -12,7 +12,7 @@ pub enum ParserError {
 	/// Only one provider per table column allowed
 	MultipleProviders,
 	/// Unexpected `{0}`, expected `{1}`
-	TooFewArguments(u64, u64),
+	TooFewArguments(usize, usize),
 	/// Unexpected `{0}`, expected `{1}`
-	TooManyArguments(u64, u64),
+	TooManyArguments(usize, usize),
 }

@@ -77,7 +77,7 @@ impl ProviderImpl for GenderProvider {
 mod tests {
 	use super::*;
 
-	const ROW_COUNT: u64 = 1000;
+	const ROW_COUNT: usize = 1000;
 
 	#[test]
 	fn test_provide_returns_gender() -> Result<(), ProviderError> { // {{{

@@ -1,7 +1,7 @@
 use crate::provider::{ProviderImpl, ProviderError};
 
 pub struct RowProvider {
-	curr_count: u64,
+	curr_count: usize,
 }
 
 impl ProviderImpl for RowProvider {
@@ -30,7 +30,7 @@ impl ProviderImpl for RowProvider {
 mod tests {
 	use super::*;
 
-	const ROW_COUNT: u64 = 1000;
+	const ROW_COUNT: usize = 1000;
 
 	#[test]
 	fn test_provide_should_return_1() -> Result<(), ProviderError> { // {{{

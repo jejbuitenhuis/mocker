@@ -1,9 +1,9 @@
 use crate::parser::errors::ParserError;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ColumnType {
 	/// String type with a max length of {0}
-	String(u64),
+	String(usize),
 	Int,
 	Long,
 	Float,
@@ -19,7 +19,7 @@ impl TryFrom<String> for ColumnType { // {{{
 			"long" => Ok(ColumnType::Long),
 			"float" => Ok(ColumnType::Float),
 			"double" => Ok(ColumnType::Double),
-			"string" => Ok( ColumnType::String(u64::MAX) ),
+			"string" => Ok( ColumnType::String(usize::MAX) ),
 			_ => Err( ParserError::Unexpected( kind, "Type".to_string() ) ),
 		}
 	}
@@ -38,7 +38,7 @@ pub enum Constraint {
 impl Constraint { // {{{
 	pub fn try_from(name: String, arguments: Vec<String>) -> Result<Constraint, ParserError> {
 		let arg_empty = arguments.is_empty();
-		let arg_count = arguments.len() as u64;
+		let arg_count = arguments.len() as usize;
 
 		match name.as_str() {
 			"primary" if arg_empty => Ok(Constraint::Primary),

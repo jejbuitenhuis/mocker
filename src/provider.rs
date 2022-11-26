@@ -8,6 +8,9 @@ pub enum ProviderError {
 	/// Used when an argument given to a [`ProviderImpl`] is not correct.
 	/// `Unexpected {0}, expected {1}`
 	UnexpectedArgument(String, String),
+
+	/// Unknown error {0}
+	Unknown(String),
 }
 
 pub trait ProviderImpl {
@@ -21,7 +24,7 @@ pub trait ProviderImpl {
 	/// # Arguments
 	///
 	/// - `row_count` The amount of rows to generate for every column.
-	fn init(&mut self, row_count: u64) -> Result<(), ProviderError> {
+	fn init(&mut self, row_count: usize) -> Result<(), ProviderError> {
 		Ok(())
 	}
 
@@ -68,7 +71,7 @@ impl ProviderRegistry {
 		Ok(())
 	}
 
-	pub fn init_providers(&mut self, row_count: u64) -> Result<(), ProviderError> {
+	pub fn init_providers(&mut self, row_count: usize) -> Result<(), ProviderError> {
 		for (_, provider) in &mut self.providers {
 			provider.init(row_count)?;
 		}

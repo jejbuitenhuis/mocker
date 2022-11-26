@@ -63,7 +63,7 @@ impl ProviderImpl for NumberProvider {
 mod tests {
 	use super::*;
 
-	const ROW_COUNT: u64 = 1000;
+	const ROW_COUNT: usize = 1000;
 
 	#[test]
 	fn test_provide_should_return_a_number() -> Result<(), ProviderError> { // {{{
