@@ -13,7 +13,7 @@ pub enum ProviderError {
 	Unknown(String),
 }
 
-pub trait ProviderImpl {
+pub trait ProviderImpl { // {{{
 	/// Used to create a new provider.
 	fn new() -> Self where Self: Sized;
 
@@ -42,15 +42,15 @@ pub trait ProviderImpl {
 	/// Gets called every time a row is created. Should return the item for the
 	/// cell in the row as a [`String`].
 	fn provide(&mut self) -> Result<String, ProviderError>;
-}
+} // }}}
 
 pub struct ProviderRegistry {
 	providers: HashMap< String, Box<dyn ProviderImpl> >,
 }
 
-impl ProviderRegistry {
-	pub fn new() -> ProviderRegistry {
-		ProviderRegistry {
+impl ProviderRegistry { // {{{
+	pub fn new() -> Self {
+		Self {
 			providers: HashMap::new(),
 		}
 	}
@@ -78,4 +78,4 @@ impl ProviderRegistry {
 
 		Ok(())
 	}
-}
+} // }}}

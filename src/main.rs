@@ -5,9 +5,9 @@ use crate::{
 	arguments::Args,
 	generator::{
 		ColumnData,
-		GeneratorImpl,
+		GeneratorError,
+		GeneratorRegistry,
 	},
-	generators::tsql::TsqlGenerator,
 	parser::{
 		config::ColumnType,
 		Parser,
@@ -16,7 +16,10 @@ use crate::{
 		ProviderError,
 		ProviderRegistry,
 	},
-	register_providers::register_providers,
+	registrars::{
+		register_providers,
+		register_generators,
+	},
 };
 
 mod arguments;
@@ -25,22 +28,23 @@ mod provider;
 mod providers;
 mod generator;
 mod generators;
-mod register_providers;
+mod registrars;
 
-// TODO: Change `ProviderError` to a more generic error
+// FIXME: Change `ProviderError` to a more generic error
 fn main() -> Result<(), ProviderError> {
 	let args = Args::parse();
 	let mut parser = Parser::new(args.config).unwrap();
 	let config = parser.parse().unwrap();
 	let mut provider_registry = ProviderRegistry::new();
+	let mut generator_registry = GeneratorRegistry::new();
 
 	println!("{:#?}", config);
 
 	register_providers(&mut provider_registry);
+	register_generators(&mut generator_registry);
 
 	provider_registry.init_providers(args.row_count)?;
 
-	// TODO: Switch to a map that preserves order
 	let mut generated_data = Vec::with_capacity(2);
 
 	// generate row numbers {{{
@@ -85,15 +89,24 @@ fn main() -> Result<(), ProviderError> {
 	} );
 	// }}}
 
-	let mut output_file = fs::File::create(args.output)
+	let output_file = fs::File::create(args.output)
+		// FIXME: Change `ProviderError` to a more generic error
 		.map_err( |e| ProviderError::Unknown( e.to_string() ) )?;
-	let mut generator = TsqlGenerator::new(
+	let generator = generator_registry.get( args.r#type.clone() )
+		.ok_or( GeneratorError::UnknownGenerator( args.r#type.to_string() ) )
+		// FIXME: Change `ProviderError` to a more generic error
+		.map_err( |_| ProviderError::Unknown( "Unknown generator".to_string() ) )?;
+
+	generator.init(
 		"some_table".to_string(),
 		args.row_count,
-		&mut output_file,
-	);
+		output_file,
+	)
+		// FIXME: Change `ProviderError` to a more generic error
+		.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
 
 	generator.generate(generated_data)
+		// FIXME: Change `ProviderError` to a more generic error
 		.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
 
 	Ok(())

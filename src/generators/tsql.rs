@@ -10,18 +10,21 @@ use crate::generator::{
 	GeneratorImpl,
 };
 
-pub struct TsqlGenerator<'a> {
+pub struct TsqlGenerator {
 	table_name: String,
 	row_count: usize,
-	output_file: &'a mut File,
+	output_file: Option<File>,
 	/// Contains the string `insert into <table> (<columns>) values `,
 	/// including the trailing space
 	columns: String,
+	initialized: bool,
 }
 
-impl<'a> TsqlGenerator<'a> {
+impl TsqlGenerator {
 	fn write_to_output(&mut self, data: &String) -> Result<(), GeneratorError> { // {{{
-		self.output_file.write( data.as_bytes() )
+		self.output_file.as_ref()
+			.unwrap()
+			.write( data.as_bytes() )
 			.map_err( |e| GeneratorError::Write( e.to_string() ) )?;
 
 		Ok(())
@@ -58,25 +61,41 @@ impl<'a> TsqlGenerator<'a> {
 
 		self.write_to_output( &");\n".to_string() )?;
 
-		self.output_file.flush()
+		self.output_file.as_ref()
+			.unwrap()
+			.flush()
 			.map_err( |e| GeneratorError::Write( e.to_string() ) )?;
 
 		Ok(())
 	} // }}}
 }
 
-impl<'a> GeneratorImpl<'a> for TsqlGenerator<'a> {
-	fn new(table_name: String, row_count: usize, output_file: &'a mut File) -> Self
+impl GeneratorImpl for TsqlGenerator {
+	fn new() -> Self
 		where Self: Sized { // {{{
 		TsqlGenerator {
-			table_name,
-			row_count,
-			output_file,
+			table_name: "".to_string(),
+			row_count: 0,
+			output_file: None,
 			columns: "".to_string(),
+			initialized: false,
 		}
 	} // }}}
 
+	fn init(&mut self, table_name: String, row_count: usize, output_file: File) -> Result<(), GeneratorError> { // {{{
+		self.table_name = table_name;
+		self.row_count = row_count;
+		self.output_file = Some(output_file);
+		self.initialized = true;
+
+		Ok(())
+	} // }}}
+
 	fn generate(&mut self, data: GeneratorData) -> Result<(), GeneratorError> { // {{{
+		if !self.initialized {
+			return Err( GeneratorError::Uninitialized );
+		}
+
 		self.generate_columns(&data)?;
 
 		// allocate vector with length equal to the amount of columns
@@ -197,13 +216,14 @@ mod tests {
 	fn test_generate_columns_generates_the_correct_column_layout() -> Result<(), GeneratorError> { // {{{
 		let setup = Setup::new();
 		// TODO: check if file actually deletes after usage
-		let mut file = tempfile().unwrap();
+		let file = tempfile().unwrap();
 
-		let mut sut = TsqlGenerator::new(
+		let mut sut = TsqlGenerator::new();
+		sut.init(
 			TABLE_NAME.to_string(),
 			ROW_COUNT,
-			&mut file,
-		);
+			file,
+		)?;
 
 		sut.generate_columns(&setup.column_data)?;
 
@@ -231,11 +251,12 @@ mod tests {
 			setup.column_2.name,
 		);
 
-		let mut sut = TsqlGenerator::new(
+		let mut sut = TsqlGenerator::new();
+		sut.init(
 			TABLE_NAME.to_string(),
 			ROW_COUNT,
-			&mut file,
-		);
+			file.try_clone().unwrap(),
+		)?;
 
 		sut.columns = columns.clone();
 
