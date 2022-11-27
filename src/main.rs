@@ -1,12 +1,12 @@
 use clap::Parser as CliParser;
-use std::{
-	collections::HashMap,
-	fs,
-};
+use std::fs;
 
 use crate::{
 	arguments::Args,
-	generator::GeneratorImpl,
+	generator::{
+		ColumnData,
+		GeneratorImpl,
+	},
 	generators::tsql::TsqlGenerator,
 	parser::{
 		config::ColumnType,
@@ -41,7 +41,7 @@ fn main() -> Result<(), ProviderError> {
 	provider_registry.init_providers(args.row_count)?;
 
 	// TODO: Switch to a map that preserves order
-	let mut generated_data = HashMap::with_capacity(2);
+	let mut generated_data = Vec::with_capacity(2);
 
 	// generate row numbers {{{
 	let row_number_provider = provider_registry.get("row")
@@ -49,7 +49,7 @@ fn main() -> Result<(), ProviderError> {
 
 	let mut generated_number_rows = Vec::with_capacity(args.row_count);
 
-	for _ in 0..generated_number_rows.capacity() {
+	for _ in 0..args.row_count {
 		let result = row_number_provider.provide()?;
 
 		println!("Row number: {:?}", result);
@@ -57,10 +57,11 @@ fn main() -> Result<(), ProviderError> {
 		generated_number_rows.push(result);
 	}
 
-	generated_data.insert(
-		( "row".to_string(), ColumnType::Int ),
-		generated_number_rows,
-	);
+	generated_data.push( ColumnData {
+		name: "row".to_string(),
+		r#type: ColumnType::Int,
+		data: generated_number_rows,
+	} );
 	// }}}
 
 	// generate genders {{{
@@ -69,7 +70,7 @@ fn main() -> Result<(), ProviderError> {
 
 	let mut generated_gender_rows = Vec::with_capacity(args.row_count);
 
-	for _ in 0..generated_gender_rows.capacity() {
+	for _ in 0..args.row_count {
 		let result = gender_provider.provide()?;
 
 		println!("Gender: {:?}", result);
@@ -77,10 +78,11 @@ fn main() -> Result<(), ProviderError> {
 		generated_gender_rows.push(result);
 	}
 
-	generated_data.insert(
-		( "gender".to_string(), ColumnType::String(1) ),
-		generated_gender_rows,
-	);
+	generated_data.push( ColumnData {
+		name: "gender".to_string(),
+		r#type: ColumnType::String(1),
+		data: generated_gender_rows,
+	} );
 	// }}}
 
 	let mut output_file = fs::File::create(args.output)

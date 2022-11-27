@@ -1,17 +1,14 @@
-use std::{
-	collections::HashMap,
-	fs::File,
-};
+use std::fs::File;
 
 use crate::parser::config::ColumnType;
 
-/// The column named {0} is of type {1}.
-pub type ColumnData = (String, ColumnType);
+pub struct ColumnData {
+	pub name: String,
+	pub r#type: ColumnType,
+	pub data: Vec<String>,
+}
 
-/// A [`HashMap`] of [`ColumnData`] mapped to [`Vec`]tors of [`String`]s. The
-/// [`Vec`]tor contains the data that should go in the column the
-/// [`ColumnData`] represents.
-pub type GeneratorData = HashMap< ColumnData, Vec<String> >;
+pub type GeneratorData = Vec<ColumnData>;
 
 #[derive(Debug)]
 pub enum GeneratorError {

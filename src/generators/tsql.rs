@@ -27,9 +27,9 @@ impl<'a> TsqlGenerator<'a> {
 		Ok(())
 	} // }}}
 
-	fn generate_columns(&mut self, columns: Vec<&ColumnData>) -> Result<(), GeneratorError> { // {{{
+	fn generate_columns(&mut self, columns: &Vec<ColumnData>) -> Result<(), GeneratorError> { // {{{
 		let columns_string = columns.into_iter()
-			.map( |(name, _)| name.clone() )
+			.map( |c| c.name.clone() )
 			.collect::< Vec<String> >()
 			.join(", ");
 
@@ -77,14 +77,14 @@ impl<'a> GeneratorImpl<'a> for TsqlGenerator<'a> {
 	} // }}}
 
 	fn generate(&mut self, data: GeneratorData) -> Result<(), GeneratorError> { // {{{
-		self.generate_columns( data.keys().collect() )?;
+		self.generate_columns(&data)?;
 
 		// allocate vector with length equal to the amount of columns
 		let mut row_data: Vec<&String> = Vec::with_capacity( data.len() );
 
 		for i in 0..self.row_count {
-			for (_row, data) in data.iter() {
-				row_data.push( data.get(i).unwrap() );
+			for row in data.iter() {
+				row_data.push( row.data.get(i).unwrap() );
 			}
 
 			self.generate_row(&row_data)?;
