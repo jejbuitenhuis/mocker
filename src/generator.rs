@@ -2,6 +2,7 @@ use std::fs::File;
 
 use crate::parser::config::ColumnType;
 
+#[derive(Clone)]
 pub struct ColumnData {
 	pub name: String,
 	pub r#type: ColumnType,

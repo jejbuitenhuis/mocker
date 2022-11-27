@@ -9,3 +9,7 @@ edition = "2021"
 
 clap = { version = "3.1.18", features = [ "derive" ] }
 rand = "0.8.5"
+
+[dev-dependencies]
+
+tempfile = "3.3.0"

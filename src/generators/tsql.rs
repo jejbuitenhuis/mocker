@@ -95,3 +95,172 @@ impl<'a> GeneratorImpl<'a> for TsqlGenerator<'a> {
 		Ok(())
 	} // }}}
 }
+
+#[cfg(test)]
+mod tests {
+	use tempfile::tempfile;
+	use std::io::{ Read, Seek, SeekFrom };
+
+	use crate::parser::config::ColumnType;
+	use super::*;
+
+	const ROW_COUNT: usize = 10;
+	const TABLE_NAME: &str = "test_table";
+
+	struct Setup { // {{{
+		column_1: ColumnData,
+		column_2: ColumnData,
+		column_data: Vec<ColumnData>,
+	}
+
+	impl Setup {
+		fn new() -> Self {
+			let column_1: ColumnData = ColumnData { // {{{
+				name: "test_column_1".to_string(),
+				r#type: ColumnType::String(10),
+				data: vec![
+					"'Data1'".to_string(),
+					"'Data2'".to_string(),
+					"'Data3'".to_string(),
+					"'Data4'".to_string(),
+					"'Data5'".to_string(),
+					"'Data6'".to_string(),
+					"'Data7'".to_string(),
+					"'Data8'".to_string(),
+					"'Data9'".to_string(),
+					"'Data10'".to_string(),
+				],
+			}; // }}}
+
+			let column_2: ColumnData = ColumnData { // {{{
+				name: "test_column_2".to_string(),
+				r#type: ColumnType::String(10),
+				data: vec![
+					"'Data11'".to_string(),
+					"'Data12'".to_string(),
+					"'Data13'".to_string(),
+					"'Data14'".to_string(),
+					"'Data15'".to_string(),
+					"'Data16'".to_string(),
+					"'Data17'".to_string(),
+					"'Data18'".to_string(),
+					"'Data19'".to_string(),
+					"'Data20'".to_string(),
+				],
+			}; // }}}
+
+			// create a copy of column_1 and column_2, because String doesn't
+			// implement Copy, but we need a copy for Setup.column_data
+			let column_3: ColumnData = ColumnData { // {{{
+				name: "test_column_1".to_string(),
+				r#type: ColumnType::String(10),
+				data: vec![
+					"'Data1'".to_string(),
+					"'Data2'".to_string(),
+					"'Data3'".to_string(),
+					"'Data4'".to_string(),
+					"'Data5'".to_string(),
+					"'Data6'".to_string(),
+					"'Data7'".to_string(),
+					"'Data8'".to_string(),
+					"'Data9'".to_string(),
+					"'Data10'".to_string(),
+				],
+			}; // }}}
+
+			let column_4: ColumnData = ColumnData { // {{{
+				name: "test_column_2".to_string(),
+				r#type: ColumnType::String(10),
+				data: vec![
+					"'Data11'".to_string(),
+					"'Data12'".to_string(),
+					"'Data13'".to_string(),
+					"'Data14'".to_string(),
+					"'Data15'".to_string(),
+					"'Data16'".to_string(),
+					"'Data17'".to_string(),
+					"'Data18'".to_string(),
+					"'Data19'".to_string(),
+					"'Data20'".to_string(),
+				],
+			}; // }}}
+
+			Self {
+				column_1,
+				column_2,
+				column_data: vec![ column_3, column_4 ],
+			}
+		}
+	} // }}}
+
+	#[test]
+	fn test_generate_columns_generates_the_correct_column_layout() -> Result<(), GeneratorError> { // {{{
+		let setup = Setup::new();
+		// TODO: check if file actually deletes after usage
+		let mut file = tempfile().unwrap();
+
+		let mut sut = TsqlGenerator::new(
+			TABLE_NAME.to_string(),
+			ROW_COUNT,
+			&mut file,
+		);
+
+		sut.generate_columns(&setup.column_data)?;
+
+		assert_eq!(
+			format!(
+				"insert into {} ({}, {}) values ",
+				TABLE_NAME,
+				setup.column_1.name,
+				setup.column_2.name,
+			),
+			sut.columns,
+		);
+
+		Ok(())
+	} // }}}
+
+	#[test]
+	fn test_generate_row_generates_the_correct_output_row() -> Result<(), GeneratorError> { // {{{
+		let setup = Setup::new();
+		let mut file = tempfile().unwrap();
+		let columns = format!(
+			"insert into {} ({}, {}) values ",
+			TABLE_NAME,
+			setup.column_1.name,
+			setup.column_2.name,
+		);
+
+		let mut sut = TsqlGenerator::new(
+			TABLE_NAME.to_string(),
+			ROW_COUNT,
+			&mut file,
+		);
+
+		sut.columns = columns.clone();
+
+		sut.generate_row(
+			&vec![ &setup.column_1.data[0], &setup.column_2.data[0] ]
+		)?;
+
+		let mut output = String::with_capacity(50);
+
+		file.seek( SeekFrom::Start(0) ).unwrap();
+		file.read_to_string(&mut output).unwrap();
+
+		assert_eq!(
+			format!(
+				"{}({}, {});\n",
+				columns.clone(),
+				setup.column_1.data[0],
+				setup.column_2.data[0],
+			),
+			output,
+		);
+
+		Ok(())
+	} // }}}
+
+	// TODO: write a unit test for TsqlGenerator.generate(self, GeneratorData).
+	// Probably need some way of mocking for it to be a unit test?
+}
