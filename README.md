@@ -2,7 +2,7 @@
 
 A program to provide mocked data for your database.
 
-> This program is a work in progress, so a lot of things won't work yet.
+> **Warning** This program is a work in progress, so a lot of things won't work yet.
 
 # Usage
 
@@ -81,32 +81,34 @@ id,name,gender,created
 ### json
 
 ```json
-[{
-	"id": 1,
-	"name": "Clementine Baglow",
-	"gender": "F",
-	"created": "2021-11-18 01:49:49"
-}, {
-	"id": 2,
-	"name": "Delinda Perulli",
-	"gender": null,
-	"created": "2022-01-18 11:50:58"
-}, {
-	"id": 3,
-	"name": "Dillie Yarrall",
-	"gender": "O",
-	"created": "2021-09-10 22:37:09"
-}, {
-	"id": 4,
-	"name": "Quintilla Talby",
-	"gender": "M",
-	"created": "2022-01-17 12:14:55"
-}, {
-	"id": 5,
-	"name": "Corilla Impey",
-	"gender": "F",
-	"created": "2022-01-06 04:19:37"
-}]
+[
+	{
+		"id": 1,
+		"name": "Clementine Baglow",
+		"gender": "F",
+		"created": "2021-11-18 01:49:49"
+	}, {
+		"id": 2,
+		"name": "Delinda Perulli",
+		"gender": null,
+		"created": "2022-01-18 11:50:58"
+	}, {
+		"id": 3,
+		"name": "Dillie Yarrall",
+		"gender": "O",
+		"created": "2021-09-10 22:37:09"
+	}, {
+		"id": 4,
+		"name": "Quintilla Talby",
+		"gender": "M",
+		"created": "2022-01-17 12:14:55"
+	}, {
+		"id": 5,
+		"name": "Corilla Impey",
+		"gender": "F",
+		"created": "2022-01-06 04:19:37"
+	}
+]
 ```
 
 ### xml
