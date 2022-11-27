@@ -19,6 +19,7 @@ impl TryFrom<String> for ColumnType { // {{{
 			"long" => Ok(ColumnType::Long),
 			"float" => Ok(ColumnType::Float),
 			"double" => Ok(ColumnType::Double),
+			// TODO: Make string length variable
 			"string" => Ok( ColumnType::String(usize::MAX) ),
 			_ => Err( ParserError::Unexpected( kind, "Type".to_string() ) ),
 		}

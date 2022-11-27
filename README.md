@@ -165,6 +165,10 @@ table TableName {
 - `long`
 - `float`
 - `double`
+- `string`
+
+### Planned types
+
 - `string(length = max)`
 - `date`
 - `time`
