@@ -65,8 +65,8 @@ impl Constraint { // {{{
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Provider {
-	name: String,
-	arguments: Vec<String>,
+	pub name: String,
+	pub arguments: Vec<String>,
 }
 
 impl Provider { // {{{

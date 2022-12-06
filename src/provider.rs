@@ -11,6 +11,9 @@ pub enum ProviderError {
 
 	/// Unknown error {0}
 	Unknown(String),
+
+	/// Used when the provider {0} is not registered in the [`ProviderRegistry`]
+	UnknownProvider(String),
 }
 
 pub trait ProviderImpl { // {{{
@@ -55,8 +58,14 @@ impl ProviderRegistry { // {{{
 		}
 	}
 
-	pub fn get(&mut self, name: impl ToString) -> Option< &mut Box<dyn ProviderImpl> > {
-		self.providers.get_mut( &name.to_string() )
+	pub fn get(&mut self, name: impl ToString) -> Result< &mut Box<dyn ProviderImpl>, ProviderError > {
+		let provider = self.providers.get_mut( &name.to_string() );
+
+		if provider.is_none() {
+			return Err( ProviderError::UnknownProvider( name.to_string() ) );
+		}
+
+		Ok( provider.unwrap() )
 	}
 
 	pub fn register(&mut self, name: String, provider: impl ProviderImpl + 'static) -> Result<(), ProviderError> {

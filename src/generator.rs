@@ -3,7 +3,7 @@ use std::fs::File;
 
 use crate::parser::config::ColumnType;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ColumnData {
 	pub name: String,
 	pub r#type: ColumnType,
@@ -38,6 +38,8 @@ pub trait GeneratorImpl { // {{{
 
 	fn init(&mut self, table_name: String, row_count: usize, output_file: File) -> Result<(), GeneratorError>;
 
+	// FIXME: Switch GeneratorData to HashMap<String, GeneratorData> so the
+	// generator can generate multiple tables
 	fn generate(&mut self, data: GeneratorData) -> Result<(), GeneratorError>;
 } // }}}
 

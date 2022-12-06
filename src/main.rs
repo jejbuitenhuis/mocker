@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use clap::Parser as CliParser;
 use std::fs;
 
@@ -5,13 +6,11 @@ use crate::{
 	arguments::Args,
 	generator::{
 		ColumnData,
+		GeneratorData,
 		GeneratorError,
 		GeneratorRegistry,
 	},
-	parser::{
-		config::ColumnType,
-		Parser,
-	},
+	parser::Parser,
 	provider::{
 		ProviderError,
 		ProviderRegistry,
@@ -32,6 +31,7 @@ mod registrars;
 
 // FIXME: Change `ProviderError` to a more generic error
 fn main() -> Result<(), ProviderError> {
+	// Initialize mocker and parse config {{{
 	let args = Args::parse();
 	let mut parser = Parser::new(args.config).unwrap();
 	let config = parser.parse().unwrap();
@@ -44,51 +44,46 @@ fn main() -> Result<(), ProviderError> {
 	register_generators(&mut generator_registry);
 
 	provider_registry.init_providers(args.row_count)?;
-
-	let mut generated_data = Vec::with_capacity(2);
-
-	// generate row numbers {{{
-	let row_number_provider = provider_registry.get("row")
-		.unwrap();
-
-	let mut generated_number_rows = Vec::with_capacity(args.row_count);
-
-	for _ in 0..args.row_count {
-		let result = row_number_provider.provide()?;
-
-		println!("Row number: {:?}", result);
-
-		generated_number_rows.push(result);
-	}
-
-	generated_data.push( ColumnData {
-		name: "row".to_string(),
-		r#type: ColumnType::Int,
-		data: generated_number_rows,
-	} );
 	// }}}
 
-	// generate genders {{{
-	let gender_provider = provider_registry.get("gender")
-		.unwrap();
+	// Generate mock data {{{
+	let mut generated_data: HashMap< String, GeneratorData >
+		= HashMap::with_capacity( config.tables.len() );
 
-	let mut generated_gender_rows = Vec::with_capacity(args.row_count);
+	for table in &config.tables {
+		let mut columns: GeneratorData
+			= Vec::with_capacity( table.columns.len() );
 
-	for _ in 0..args.row_count {
-		let result = gender_provider.provide()?;
+		for column in &table.columns {
+			let mut rows = Vec::with_capacity(args.row_count);
+			let provider = provider_registry.get( column.provider.name.clone() )?;
 
-		println!("Gender: {:?}", result);
+			provider.reset(&column.provider.arguments)?;
 
-		generated_gender_rows.push(result);
+			for _ in 0..args.row_count {
+				rows.push( provider.provide()? );
+			}
+
+			columns.push( ColumnData {
+				name: column.name.clone(),
+				r#type: column.kind,
+				data: rows,
+			} );
+		}
+
+		generated_data.insert(
+			table.name.clone(),
+			columns,
+		);
 	}
 
-	generated_data.push( ColumnData {
-		name: "gender".to_string(),
-		r#type: ColumnType::String(1),
-		data: generated_gender_rows,
-	} );
+	println!("{:#?}", generated_data);
 	// }}}
 
+	// generate output {{{
+	// FIXME: We have multiple tables... At the moment we spit out one file
+	// with a hard-coded table name. How do we switch to the HashMap containing
+	// generated columns with rows per table?
 	let output_file = fs::File::create(args.output)
 		// FIXME: Change `ProviderError` to a more generic error
 		.map_err( |e| ProviderError::Unknown( e.to_string() ) )?;
@@ -98,16 +93,17 @@ fn main() -> Result<(), ProviderError> {
 		.map_err( |_| ProviderError::Unknown( "Unknown generator".to_string() ) )?;
 
 	generator.init(
-		"some_table".to_string(),
+		"SimpleTable".to_string(),
 		args.row_count,
 		output_file,
 	)
 		// FIXME: Change `ProviderError` to a more generic error
 		.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
 
-	generator.generate(generated_data)
+	generator.generate( generated_data.get("SimpleTable").unwrap().to_owned() )
 		// FIXME: Change `ProviderError` to a more generic error
 		.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
+	// }}}
 
 	Ok(())
 }
