@@ -1,7 +1,8 @@
-use std::path::Path;
-use std::collections::HashMap;
 use clap::Parser as CliParser;
+use lazy_static::lazy_static;
+use std::collections::HashMap;
 use std::fs;
+use std::path::Path;
 
 use crate::{
 	arguments::Args,
@@ -29,6 +30,16 @@ mod providers;
 mod generator;
 mod generators;
 mod registrars;
+
+lazy_static! { // {{{
+	static ref FILE_EXTENSION_MAPPINGS: HashMap<&'static str, &'static str> = {
+		let mut m = HashMap::new();
+
+		m.insert("tsql", "sql");
+
+		m
+	};
+} // }}}
 
 // FIXME: Change `ProviderError` to a more generic error
 fn main() -> Result<(), ProviderError> {
@@ -83,13 +94,17 @@ fn main() -> Result<(), ProviderError> {
 
 	// generate output {{{
 	let output_dir = Path::new(&args.output);
+	let file_extension = FILE_EXTENSION_MAPPINGS.get( args.r#type.as_str() )
+		// If the type is not in the mappings map, the type is the same as the
+		// file extension
+		.unwrap_or( &args.r#type.as_str() )
+		.to_string();
 
 	for (table, data) in generated_data.into_iter() {
 		let output_file_name = output_dir.join( format!(
 			"{}.{}",
 			table,
-			// TODO: Use correct file extensions (tsql uses .sql, not .tsql)
-			args.r#type,
+			file_extension.clone(),
 		) );
 
 		println!("Using file '{}' for table '{}'", output_file_name.display(), table);
