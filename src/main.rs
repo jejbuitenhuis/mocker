@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::collections::HashMap;
 use clap::Parser as CliParser;
 use std::fs;
@@ -81,28 +82,39 @@ fn main() -> Result<(), ProviderError> {
 	// }}}
 
 	// generate output {{{
-	// FIXME: We have multiple tables... At the moment we spit out one file
-	// with a hard-coded table name. How do we switch to the HashMap containing
-	// generated columns with rows per table?
-	let output_file = fs::File::create(args.output)
-		// FIXME: Change `ProviderError` to a more generic error
-		.map_err( |e| ProviderError::Unknown( e.to_string() ) )?;
-	let generator = generator_registry.get( args.r#type.clone() )
-		.ok_or( GeneratorError::UnknownGenerator( args.r#type.to_string() ) )
-		// FIXME: Change `ProviderError` to a more generic error
-		.map_err( |_| ProviderError::Unknown( "Unknown generator".to_string() ) )?;
+	let output_dir = Path::new(&args.output);
 
-	generator.init(
-		"SimpleTable".to_string(),
-		args.row_count,
-		output_file,
-	)
-		// FIXME: Change `ProviderError` to a more generic error
-		.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
+	for (table, data) in generated_data.into_iter() {
+		let output_file_name = output_dir.join( format!(
+			"{}.{}",
+			table,
+			// TODO: Use correct file extensions (tsql uses .sql, not .tsql)
+			args.r#type,
+		) );
 
-	generator.generate( generated_data.get("SimpleTable").unwrap().to_owned() )
-		// FIXME: Change `ProviderError` to a more generic error
-		.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
+		println!("Using file '{}' for table '{}'", output_file_name.display(), table);
+
+		let output_file = fs::File::create( output_file_name.clone() )
+			// FIXME: Change `ProviderError` to a more generic error
+			.map_err( |e| ProviderError::Unknown( e.to_string() ) )?;
+		// TODO: Use one generator for every output file
+		let generator = generator_registry.get( args.r#type.clone() )
+			.ok_or( GeneratorError::UnknownGenerator( args.r#type.to_string() ) )
+			// FIXME: Change `ProviderError` to a more generic error
+			.map_err( |_| ProviderError::Unknown( "Unknown generator".to_string() ) )?;
+
+		generator.init(
+			table,
+			args.row_count,
+			output_file,
+		)
+			// FIXME: Change `ProviderError` to a more generic error
+			.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
+
+		generator.generate(data)
+			// FIXME: Change `ProviderError` to a more generic error
+			.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
+	}
 	// }}}
 
 	Ok(())

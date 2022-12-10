@@ -28,12 +28,23 @@ fn validate_output_type(r#type: &str) -> Result<(), String> { // {{{
 	Ok(())
 } // }}}
 
-// FIXME: doesn't fail when using `/tmp/test.sql`. Why are we even checking this?
-fn validate_config_path(path: &str) -> Result<(), String> { // {{{
+fn validate_path_is_folder(path: &str) -> Result<(), String> { // {{{
+	validate_path_exists(path)?;
+
+	let path = Path::new(path);
+
+	if !path.is_dir() {
+		return Err( "path is not a directory.".to_string() );
+	}
+
+	Ok(())
+} // }}}
+
+fn validate_path_exists(path: &str) -> Result<(), String> { // {{{
 	let path = Path::new(path);
 
 	if !path.exists() {
-		return Err( "file does not exist.".to_string() );
+		return Err( "file/directory does not exist.".to_string() );
 	}
 
 	Ok(())
@@ -50,11 +61,11 @@ pub struct Args {
 	#[clap(short, long, default_value = "tsql", validator = validate_output_type)]
 	pub r#type: String,
 
-	/// The path to the output file
-	#[clap(short, long, default_value = "mock_data.sql")]
+	/// The path to the output folder
+	#[clap(short, long, validator = validate_path_is_folder)]
 	pub output: String,
 
 	/// The path to the config file
-	#[clap(validator = validate_config_path)]
+	#[clap(validator = validate_path_exists)]
 	pub config: PathBuf,
 }
