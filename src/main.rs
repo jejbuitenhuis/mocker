@@ -99,6 +99,10 @@ fn main() -> Result<(), ProviderError> {
 		// file extension
 		.unwrap_or( &args.r#type.as_str() )
 		.to_string();
+	let generator = generator_registry.get( args.r#type.clone() )
+		.ok_or( GeneratorError::UnknownGenerator( args.r#type.to_string() ) )
+		// FIXME: Change `ProviderError` to a more generic error
+		.map_err( |_| ProviderError::Unknown( "Unknown generator".to_string() ) )?;
 
 	for (table, data) in generated_data.into_iter() {
 		let output_file_name = output_dir.join( format!(
@@ -112,11 +116,6 @@ fn main() -> Result<(), ProviderError> {
 		let output_file = fs::File::create( output_file_name.clone() )
 			// FIXME: Change `ProviderError` to a more generic error
 			.map_err( |e| ProviderError::Unknown( e.to_string() ) )?;
-		// TODO: Use one generator for every output file
-		let generator = generator_registry.get( args.r#type.clone() )
-			.ok_or( GeneratorError::UnknownGenerator( args.r#type.to_string() ) )
-			// FIXME: Change `ProviderError` to a more generic error
-			.map_err( |_| ProviderError::Unknown( "Unknown generator".to_string() ) )?;
 
 		generator.init(
 			table,
