@@ -191,6 +191,7 @@ A provider determines what should be placed in the column. A provider always sta
 - `#row()`: the current row number. Starts at `1` and increments by 1 for every row
 - `#number(min = 0, max = infinite)`: a random number between `min` and `max`
 - `#gender(long = false)`: `M`, `F` or `O`. `MALE`, `FEMALE` or `OTHER` when `long` is `true`
+- `#random(opt1, ..., optn)`: randomly chooses one of the provided options
 
 ### Planned providers
 

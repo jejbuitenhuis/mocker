@@ -14,6 +14,12 @@ pub enum ProviderError {
 
 	/// Used when the provider {0} is not registered in the [`ProviderRegistry`]
 	UnknownProvider(String),
+
+	/// Used when too few arguments are given ({0}), but {1} were expected
+	TooFewArguments(usize, usize),
+
+	/// Used when too many arguments are given ({0}), but {1} were expected
+	TooManyArguments(usize, usize),
 }
 
 pub trait ProviderImpl { // {{{
@@ -68,7 +74,9 @@ impl ProviderRegistry { // {{{
 		Ok( provider.unwrap() )
 	}
 
-	pub fn register(&mut self, name: String, provider: impl ProviderImpl + 'static) -> Result<(), ProviderError> {
+	pub fn register(&mut self, name: impl ToString, provider: impl ProviderImpl + 'static) -> Result<(), ProviderError> {
+		let name = name.to_string();
+
 		// TODO: Switch to https://doc.rust-lang.org/std/collections/struct.HashMap.html#method.try_insert
 		// when it is in stable
 		if self.providers.get(&name).is_some() {

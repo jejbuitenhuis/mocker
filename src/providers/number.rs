@@ -1,7 +1,9 @@
 use rand::{
-	rngs::mock::StepRng,
-	prelude::{Rng, SliceRandom}, RngCore
+	prelude::Rng,
+	RngCore
 };
+#[cfg(test)]
+use rand::rngs::mock::StepRng;
 
 use crate::provider::{ProviderImpl, ProviderError};
 
@@ -23,7 +25,7 @@ impl ProviderImpl for NumberProvider {
 
 	#[cfg(test)]
 	fn new() -> Self {
-		NumberProvider {
+		Self {
 			rng: Box::new( StepRng::new(0, 1) ),
 			min: 0,
 			max: i64::MAX,

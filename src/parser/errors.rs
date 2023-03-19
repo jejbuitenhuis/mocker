@@ -11,8 +11,8 @@ pub enum ParserError {
 	NoProvider,
 	/// Only one provider per table column allowed
 	MultipleProviders,
-	/// Unexpected `{0}`, expected `{1}`
+	/// Too few arguments. Got `{0}`, expected `{1}`
 	TooFewArguments(usize, usize),
-	/// Unexpected `{0}`, expected `{1}`
+	/// Too many arguments. Got `{0}`, expected `{1}`
 	TooManyArguments(usize, usize),
 }
