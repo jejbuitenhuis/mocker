@@ -5,10 +5,10 @@ pub struct RowProvider {
 }
 
 impl ProviderImpl for RowProvider {
-	fn new() -> Self {
-		RowProvider {
+	fn new(row_count: usize) -> Result<Self, ProviderError> {
+		Ok( RowProvider {
 			curr_count: 1,
-		}
+		} )
 	}
 
 	fn reset(&mut self, _arguments: &Vec<String>) -> Result<(), ProviderError> {
@@ -34,9 +34,8 @@ mod tests {
 
 	#[test]
 	fn test_provide_should_return_1() -> Result<(), ProviderError> { // {{{
-		let mut sut = RowProvider::new();
+		let mut sut = RowProvider::new(ROW_COUNT)?;
 
-		sut.init(ROW_COUNT)?;
 		sut.reset( &vec![] )?;
 
 		let result = sut.provide()?;
@@ -48,9 +47,8 @@ mod tests {
 
 	#[test]
 	fn test_provide_should_return_5() -> Result<(), ProviderError> { // {{{
-		let mut sut = RowProvider::new();
+		let mut sut = RowProvider::new(ROW_COUNT)?;
 
-		sut.init(ROW_COUNT)?;
 		sut.reset( &vec![] )?;
 
 		// run 4 times, so the next provide should return "5"
@@ -67,9 +65,8 @@ mod tests {
 
 	#[test]
 	fn test_reset_resets_counter() -> Result<(), ProviderError> { // {{{
-		let mut sut = RowProvider::new();
+		let mut sut = RowProvider::new(ROW_COUNT)?;
 
-		sut.init(ROW_COUNT)?;
 		sut.reset( &vec![] )?;
 
 		// run 4 times, so the next provide should return "5"

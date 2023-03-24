@@ -47,15 +47,13 @@ fn main() -> Result<(), ProviderError> {
 	let args = Args::parse();
 	let mut parser = Parser::new(args.config).unwrap();
 	let config = parser.parse().unwrap();
-	let mut provider_registry = ProviderRegistry::new();
+	let mut provider_registry = ProviderRegistry::new(args.row_count);
 	let mut generator_registry = GeneratorRegistry::new();
 
 	println!("{:#?}", config);
 
 	register_providers(&mut provider_registry);
 	register_generators(&mut generator_registry);
-
-	provider_registry.init_providers(args.row_count)?;
 	// }}}
 
 	// Generate mock data {{{
@@ -100,7 +98,6 @@ fn main() -> Result<(), ProviderError> {
 		.unwrap_or( &args.r#type.as_str() )
 		.to_string();
 	let generator = generator_registry.get( args.r#type.clone() )
-		.ok_or( GeneratorError::UnknownGenerator( args.r#type.to_string() ) )
 		// FIXME: Change `ProviderError` to a more generic error
 		.map_err( |_| ProviderError::Unknown( "Unknown generator".to_string() ) )?;
 

@@ -71,15 +71,14 @@ impl TsqlGenerator {
 }
 
 impl GeneratorImpl for TsqlGenerator {
-	fn new() -> Self
-		where Self: Sized { // {{{
-		TsqlGenerator {
+	fn new() -> Result<Self, GeneratorError> where Self: Sized { // {{{
+		Ok( TsqlGenerator {
 			table_name: "".to_string(),
 			row_count: 0,
 			output_file: None,
 			columns: "".to_string(),
 			initialized: false,
-		}
+		} )
 	} // }}}
 
 	fn init(&mut self, table_name: String, row_count: usize, output_file: File) -> Result<(), GeneratorError> { // {{{
@@ -218,7 +217,7 @@ mod tests {
 		// TODO: check if file actually deletes after usage
 		let file = tempfile().unwrap();
 
-		let mut sut = TsqlGenerator::new();
+		let mut sut = TsqlGenerator::new()?;
 		sut.init(
 			TABLE_NAME.to_string(),
 			ROW_COUNT,
@@ -251,7 +250,7 @@ mod tests {
 			setup.column_2.name,
 		);
 
-		let mut sut = TsqlGenerator::new();
+		let mut sut = TsqlGenerator::new()?;
 		sut.init(
 			TABLE_NAME.to_string(),
 			ROW_COUNT,

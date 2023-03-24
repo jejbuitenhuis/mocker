@@ -15,21 +15,21 @@ pub struct NumberProvider {
 
 impl ProviderImpl for NumberProvider {
 	#[cfg( not(test) )]
-	fn new() -> Self {
-		NumberProvider {
+	fn new(row_count: usize) -> Result<Self, ProviderError> {
+		Ok( NumberProvider {
 			rng: Box::new( rand::thread_rng() ),
 			min: 0,
 			max: i64::MAX,
-		}
+		} )
 	}
 
 	#[cfg(test)]
-	fn new() -> Self {
-		Self {
+	fn new(row_count: usize) -> Result<Self, ProviderError> {
+		Ok( Self {
 			rng: Box::new( StepRng::new(0, 1) ),
 			min: 0,
 			max: i64::MAX,
-		}
+		} )
 	}
 
 	fn reset(&mut self, arguments: &Vec<String>) -> Result<(), ProviderError> {
@@ -69,9 +69,7 @@ mod tests {
 
 	#[test]
 	fn test_provide_should_return_a_number() -> Result<(), ProviderError> { // {{{
-		let mut sut = NumberProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = NumberProvider::new(ROW_COUNT)?;
 		sut.reset( &vec![] )?;
 
 		let result = sut.provide()?;
@@ -84,9 +82,7 @@ mod tests {
 	#[test]
 	fn test_reset_should_set_minimum_to_10() -> Result<(), ProviderError> { // {{{
 		let expected = 10;
-		let mut sut = NumberProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = NumberProvider::new(ROW_COUNT)?;
 
 		sut.reset( &vec![ expected.to_string() ] )?;
 
@@ -98,9 +94,7 @@ mod tests {
 	#[test]
 	fn test_reset_should_set_maximum_to_10() -> Result<(), ProviderError> { // {{{
 		let expected = 10;
-		let mut sut = NumberProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = NumberProvider::new(ROW_COUNT)?;
 
 		sut.reset( &vec![ 5.to_string(), expected.to_string() ] )?;
 
@@ -112,9 +106,7 @@ mod tests {
 	#[test]
 	fn test_reset_should_set_minimum_to_15_when_maximum_is_also_set() -> Result<(), ProviderError> { // {{{
 		let expected = 15;
-		let mut sut = NumberProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = NumberProvider::new(ROW_COUNT)?;
 
 		sut.reset( &vec![ expected.to_string(), 20.to_string() ] )?;
 
@@ -127,9 +119,7 @@ mod tests {
 	fn test_reset_should_return_error_when_no_number_is_given_to_minimum() -> Result<(), ProviderError> { // {{{
 		let arg = "abc".to_string();
 		let expected = Err( ProviderError::UnexpectedArgument( arg.clone(), "Number".to_string() ) );
-		let mut sut = NumberProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = NumberProvider::new(ROW_COUNT)?;
 
 		let result = sut.reset( &vec![ arg.clone() ] );
 
@@ -142,9 +132,7 @@ mod tests {
 	fn test_reset_should_return_error_when_no_number_is_given_to_maximum() -> Result<(), ProviderError> { // {{{
 		let arg = "abc".to_string();
 		let expected = Err( ProviderError::UnexpectedArgument( arg.clone(), "Number".to_string() ) );
-		let mut sut = NumberProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = NumberProvider::new(ROW_COUNT)?;
 
 		let result = sut.reset( &vec![ 5.to_string(), arg.clone() ] );
 
@@ -155,9 +143,7 @@ mod tests {
 
 	#[test]
 	fn test_reset_should_set_min_to_default_when_no_arguments_are_given() -> Result<(), ProviderError> { // {{{
-		let mut sut = NumberProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = NumberProvider::new(ROW_COUNT)?;
 
 		sut.reset( &vec![ 5.to_string(), 10.to_string() ] )?;
 
@@ -170,9 +156,7 @@ mod tests {
 
 	#[test]
 	fn test_reset_should_set_max_to_default_when_no_arguments_are_given() -> Result<(), ProviderError> { // {{{
-		let mut sut = NumberProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = NumberProvider::new(ROW_COUNT)?;
 
 		sut.reset( &vec![ 5.to_string(), 10.to_string() ] )?;
 

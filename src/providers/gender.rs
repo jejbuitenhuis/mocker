@@ -1,7 +1,8 @@
 use rand::{
-	rngs::mock::StepRng,
-	prelude::{Rng, SliceRandom}, RngCore
+	prelude::SliceRandom, RngCore
 };
+#[cfg(test)]
+use rand::rngs::mock::StepRng;
 
 use crate::provider::{ProviderImpl, ProviderError};
 
@@ -32,19 +33,19 @@ pub struct GenderProvider {
 
 impl ProviderImpl for GenderProvider {
 	#[cfg( not(test) )]
-	fn new() -> Self {
-		Self {
+	fn new(row_count: usize) -> Result<Self, ProviderError> {
+		Ok( Self {
 			rng: Box::new( rand::thread_rng() ),
 			long: false,
-		}
+		} )
 	}
 
 	#[cfg(test)]
-	fn new() -> Self {
-		Self {
+	fn new(row_count: usize) -> Result<Self, ProviderError> {
+		Ok( Self {
 			rng: Box::new( StepRng::new(0, 1) ),
 			long: false,
-		}
+		} )
 	}
 
 	fn reset(&mut self, arguments: &Vec<String>) -> Result<(), ProviderError> {
@@ -82,9 +83,7 @@ mod tests {
 	#[test]
 	fn test_provide_returns_gender() -> Result<(), ProviderError> { // {{{
 		let expected = format!( "'{}'", GENDER_LIST[0].short );
-		let mut sut = GenderProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = GenderProvider::new(ROW_COUNT)?;
 
 		sut.reset( &vec![] )?;
 
@@ -96,9 +95,7 @@ mod tests {
 	#[test]
 	fn test_provide_returns_long_gender() -> Result<(), ProviderError> { // {{{
 		let expected = format!( "'{}'", GENDER_LIST[0].long );
-		let mut sut = GenderProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = GenderProvider::new(ROW_COUNT)?;
 
 		sut.reset( &vec![ "true".to_string() ] )?;
 
@@ -109,9 +106,7 @@ mod tests {
 
 	#[test]
 	fn test_reset_should_set_long_to_default_when_no_arguments_are_given() -> Result<(), ProviderError> { // {{{
-		let mut sut = GenderProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = GenderProvider::new(ROW_COUNT)?;
 
 		sut.reset( &vec![ "true".to_string() ] )?;
 
@@ -126,9 +121,7 @@ mod tests {
 	fn test_reset_should_return_error_when_no_boolean_is_given_to_long() -> Result<(), ProviderError> { // {{{
 		let arg = "123".to_string();
 		let expected = Err( ProviderError::UnexpectedArgument( arg.clone(), "Boolean".to_string() ) );
-		let mut sut = GenderProvider::new();
-
-		sut.init(ROW_COUNT)?;
+		let mut sut = GenderProvider::new(ROW_COUNT)?;
 
 		let result = sut.reset( &vec![ arg.clone() ] );
 
