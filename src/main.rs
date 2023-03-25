@@ -9,15 +9,10 @@ use crate::{
 	generator::{
 		ColumnData,
 		GeneratorData,
-		GeneratorError,
-		GeneratorRegistry,
 	},
 	parser::Parser,
-	provider::{
-		ProviderError,
-		ProviderRegistry,
-	},
-	registrars::{
+	provider::ProviderError,
+	registry::registrars::{
 		register_providers,
 		register_generators,
 	},
@@ -29,7 +24,7 @@ mod provider;
 mod providers;
 mod generator;
 mod generators;
-mod registrars;
+mod registry;
 
 lazy_static! { // {{{
 	static ref FILE_EXTENSION_MAPPINGS: HashMap<&'static str, &'static str> = {
@@ -45,15 +40,13 @@ lazy_static! { // {{{
 fn main() -> Result<(), ProviderError> {
 	// Initialize mocker and parse config {{{
 	let args = Args::parse();
-	let mut parser = Parser::new(args.config).unwrap();
+	let mut parser = Parser::new(&args.config).unwrap();
 	let config = parser.parse().unwrap();
-	let mut provider_registry = ProviderRegistry::new(args.row_count);
-	let mut generator_registry = GeneratorRegistry::new();
 
 	println!("{:#?}", config);
 
-	register_providers(&mut provider_registry);
-	register_generators(&mut generator_registry);
+	let mut provider_registry = register_providers(&args);
+	let mut generator_registry = register_generators(&args);
 	// }}}
 
 	// Generate mock data {{{
@@ -66,7 +59,9 @@ fn main() -> Result<(), ProviderError> {
 
 		for column in &table.columns {
 			let mut rows = Vec::with_capacity(args.row_count);
-			let provider = provider_registry.get( column.provider.name.clone() )?;
+			let provider = provider_registry.get( column.provider.name.clone() )
+				// FIXME: Change `ProviderError` to a more generic error
+				.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
 
 			provider.reset(&column.provider.arguments)?;
 

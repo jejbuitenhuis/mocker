@@ -4,7 +4,11 @@ use rand::{
 #[cfg(test)]
 use rand::rngs::mock::StepRng;
 
-use crate::provider::{ProviderImpl, ProviderError};
+use crate::provider::{
+	ProviderCreationData,
+	ProviderImpl,
+	ProviderError,
+};
 
 struct Gender {
 	short: char,
@@ -33,7 +37,7 @@ pub struct GenderProvider {
 
 impl ProviderImpl for GenderProvider {
 	#[cfg( not(test) )]
-	fn new(row_count: usize) -> Result<Self, ProviderError> {
+	fn new(data: &ProviderCreationData) -> Result<Self, ProviderError> {
 		Ok( Self {
 			rng: Box::new( rand::thread_rng() ),
 			long: false,
@@ -41,7 +45,7 @@ impl ProviderImpl for GenderProvider {
 	}
 
 	#[cfg(test)]
-	fn new(row_count: usize) -> Result<Self, ProviderError> {
+	fn new(data: &ProviderCreationData) -> Result<Self, ProviderError> {
 		Ok( Self {
 			rng: Box::new( StepRng::new(0, 1) ),
 			long: false,
@@ -78,12 +82,12 @@ impl ProviderImpl for GenderProvider {
 mod tests {
 	use super::*;
 
-	const ROW_COUNT: usize = 1000;
+	const CREATION_DATA: ProviderCreationData = ProviderCreationData { row_count: 1000 };
 
 	#[test]
 	fn test_provide_returns_gender() -> Result<(), ProviderError> { // {{{
 		let expected = format!( "'{}'", GENDER_LIST[0].short );
-		let mut sut = GenderProvider::new(ROW_COUNT)?;
+		let mut sut = GenderProvider::new(&CREATION_DATA)?;
 
 		sut.reset( &vec![] )?;
 
@@ -95,7 +99,7 @@ mod tests {
 	#[test]
 	fn test_provide_returns_long_gender() -> Result<(), ProviderError> { // {{{
 		let expected = format!( "'{}'", GENDER_LIST[0].long );
-		let mut sut = GenderProvider::new(ROW_COUNT)?;
+		let mut sut = GenderProvider::new(&CREATION_DATA)?;
 
 		sut.reset( &vec![ "true".to_string() ] )?;
 
@@ -106,7 +110,7 @@ mod tests {
 
 	#[test]
 	fn test_reset_should_set_long_to_default_when_no_arguments_are_given() -> Result<(), ProviderError> { // {{{
-		let mut sut = GenderProvider::new(ROW_COUNT)?;
+		let mut sut = GenderProvider::new(&CREATION_DATA)?;
 
 		sut.reset( &vec![ "true".to_string() ] )?;
 
@@ -121,7 +125,7 @@ mod tests {
 	fn test_reset_should_return_error_when_no_boolean_is_given_to_long() -> Result<(), ProviderError> { // {{{
 		let arg = "123".to_string();
 		let expected = Err( ProviderError::UnexpectedArgument( arg.clone(), "Boolean".to_string() ) );
-		let mut sut = GenderProvider::new(ROW_COUNT)?;
+		let mut sut = GenderProvider::new(&CREATION_DATA)?;
 
 		let result = sut.reset( &vec![ arg.clone() ] );
 

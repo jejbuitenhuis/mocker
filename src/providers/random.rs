@@ -7,7 +7,10 @@ use rand::{
 use rand::rngs::mock::StepRng;
 
 use crate::{
-	provider::ProviderImpl,
+	provider::{
+		ProviderCreationData,
+		ProviderImpl,
+	},
 	ProviderError,
 };
 
@@ -17,7 +20,7 @@ pub struct RandomProvider {
 }
 
 impl ProviderImpl for RandomProvider {
-	fn new(row_count: usize) -> Result<Self, ProviderError> {
+	fn new(data: &ProviderCreationData) -> Result<Self, ProviderError> {
 		Ok( Self {
 			#[cfg( not(test) )] rng: Box::new( rand::thread_rng() ),
 			#[cfg(test)] rng: Box::new( StepRng::new(0, 1) ),
@@ -46,7 +49,7 @@ impl ProviderImpl for RandomProvider {
 mod tests {
 	use super::*;
 
-	const ROW_COUNT: usize = 1000;
+	const CREATION_DATA: ProviderCreationData = ProviderCreationData { row_count: 1000 };
 	lazy_static! {
 		static ref ITEMS: Vec<String> = vec![
 			"Item 1".to_string(),
@@ -59,7 +62,7 @@ mod tests {
 
 	#[test]
 	fn test_provide_should_return_the_first_item() -> Result<(), ProviderError> { // {{{
-		let mut sut = RandomProvider::new(ROW_COUNT)?;
+		let mut sut = RandomProvider::new(&CREATION_DATA)?;
 
 		sut.reset(&ITEMS)?;
 
@@ -72,7 +75,7 @@ mod tests {
 
 	#[test]
 	fn test_reset_should_give_an_error_when_too_few_arguments_are_given() -> Result<(), ProviderError> { // {{{
-		let mut sut = RandomProvider::new(ROW_COUNT)?;
+		let mut sut = RandomProvider::new(&CREATION_DATA)?;
 
 		let result = sut.reset(&vec![ "Item 1".to_string() ]);
 
@@ -83,7 +86,7 @@ mod tests {
 
 	#[test]
 	fn test_reset_should_not_give_an_error_when_too_few_arguments_are_given() -> Result<(), ProviderError> { // {{{
-		let mut sut = RandomProvider::new(ROW_COUNT)?;
+		let mut sut = RandomProvider::new(&CREATION_DATA)?;
 
 		let result = sut.reset(&vec![
 			"Item 1".to_string(),

@@ -1,11 +1,15 @@
-use crate::provider::{ProviderImpl, ProviderError};
+use crate::provider::{
+	ProviderCreationData,
+	ProviderImpl,
+	ProviderError,
+};
 
 pub struct RowProvider {
 	curr_count: usize,
 }
 
 impl ProviderImpl for RowProvider {
-	fn new(row_count: usize) -> Result<Self, ProviderError> {
+	fn new(data: &ProviderCreationData) -> Result<Self, ProviderError> {
 		Ok( RowProvider {
 			curr_count: 1,
 		} )
@@ -30,11 +34,11 @@ impl ProviderImpl for RowProvider {
 mod tests {
 	use super::*;
 
-	const ROW_COUNT: usize = 1000;
+	const CREATION_DATA: ProviderCreationData = ProviderCreationData { row_count: 1000 };
 
 	#[test]
 	fn test_provide_should_return_1() -> Result<(), ProviderError> { // {{{
-		let mut sut = RowProvider::new(ROW_COUNT)?;
+		let mut sut = RowProvider::new(&CREATION_DATA)?;
 
 		sut.reset( &vec![] )?;
 
@@ -47,7 +51,7 @@ mod tests {
 
 	#[test]
 	fn test_provide_should_return_5() -> Result<(), ProviderError> { // {{{
-		let mut sut = RowProvider::new(ROW_COUNT)?;
+		let mut sut = RowProvider::new(&CREATION_DATA)?;
 
 		sut.reset( &vec![] )?;
 
@@ -65,7 +69,7 @@ mod tests {
 
 	#[test]
 	fn test_reset_resets_counter() -> Result<(), ProviderError> { // {{{
-		let mut sut = RowProvider::new(ROW_COUNT)?;
+		let mut sut = RowProvider::new(&CREATION_DATA)?;
 
 		sut.reset( &vec![] )?;
 

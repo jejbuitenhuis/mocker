@@ -24,7 +24,7 @@ pub struct Parser {
 }
 
 impl Parser {
-	pub fn new(file: PathBuf) -> Result<Parser, ParserError> { // {{{
+	pub fn new(file: &PathBuf) -> Result<Parser, ParserError> { // {{{
 		let file_content = fs::read_to_string(file)
 			.map_err( |e| ParserError::FileError( e.to_string() ) )?;
 
