@@ -6,6 +6,7 @@ use crate::{
 		ProviderImpl,
 	},
 	providers::{
+		first_name::FirstNameProvider,
 		gender::GenderProvider,
 		random::RandomProvider,
 		number::NumberProvider,
@@ -30,19 +31,23 @@ pub fn register_providers(args: &Args) -> Registry< Box<dyn ProviderImpl>, Provi
 
 	registry.register(
 		"row",
-		|args| Ok( Box::new( RowProvider::new(args)? ) )
+		|args| Ok( Box::new( RowProvider::new(args)? ) ),
 	).unwrap();
 	registry.register(
 		"number",
-		|args| Ok( Box::new( NumberProvider::new(args)? ) )
+		|args| Ok( Box::new( NumberProvider::new(args)? ) ),
 	).unwrap();
 	registry.register(
 		"gender",
-		|args| Ok( Box::new( GenderProvider::new(args)? ) )
+		|args| Ok( Box::new( GenderProvider::new(args)? ) ),
 	).unwrap();
 	registry.register(
 		"random",
-		|args| Ok( Box::new( RandomProvider::new(args)? ) )
+		|args| Ok( Box::new( RandomProvider::new(args)? ) ),
+	).unwrap();
+	registry.register(
+		"first_name",
+		|args| Ok( Box::new( FirstNameProvider::new(args)? ) ),
 	).unwrap();
 
 	registry
@@ -56,7 +61,7 @@ pub fn register_generators<'a>(args: &Args) -> Registry< Box<dyn GeneratorImpl>,
 
 	registry.register(
 		"tsql",
-		|args| Ok( Box::new( TsqlGenerator::new()? ) )
+		|args| Ok( Box::new( TsqlGenerator::new()? ) ),
 	).unwrap();
 
 	registry

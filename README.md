@@ -192,12 +192,12 @@ A provider determines what should be placed in the column. A provider always sta
 - `#number(min = 0, max = infinite)`: a random number between `min` and `max`
 - `#gender(long = false)`: `M`, `F` or `O`. `MALE`, `FEMALE` or `OTHER` when `long` is `true`
 - `#random(opt1, ..., optn)`: randomly chooses one of the provided options
+- `#first_name()`: return a random first name
 
 ### Planned providers
 
 - `#decimal(min = 0.0, max = infinite)`: a random decimal between `min` and `max`
 - `#name()`
-- `#first_name()`
 - `#last_name()`
 - `#date()`
 - `#time()`
