@@ -22,24 +22,22 @@ table SecondTable {
 }
 ```
 
-When run with `mocker --row-count 5 --type tsql file.mock`, the output should look something like this:
+When run with `mocker --row-count 5 --output /tmp/mocker --type tsql file.mock`, the output should look something like this:
 
 ```sql
-begin transaction;
+-- file /tmp/mocker/TestTable.sql
 insert into TestTable (some_column, can_be_empty) values (1, 291);
 insert into TestTable (some_column, can_be_empty) values (2, 624);
 insert into TestTable (some_column, can_be_empty) values (3, 28);
 insert into TestTable (some_column, can_be_empty) values (4, null);
 insert into TestTable (some_column, can_be_empty) values (5, 300);
-commit transaction;
 
-begin transaction;
+-- file /tmp/file/SecondTable.sql
 insert into SecondTable (some_column, another_column) values (1, 'Winni Crinage');
 insert into SecondTable (some_column, another_column) values (2, 'Maggie Sennett');
 insert into SecondTable (some_column, another_column) values (3, 'Glad Barti');
 insert into SecondTable (some_column, another_column) values (4, 'Orran O'' Markey');
 insert into SecondTable (some_column, another_column) values (5, 'Dur Chittleburgh');
-commit transaction;
 ```
 
 ## Output types
@@ -58,13 +56,11 @@ table Account {
 ### tsql
 
 ```sql
-begin transaction;
 insert into Account (id, name, gender, created) values (1, 'Clementine Baglow', 'F', '2021-11-18 01:49:49');
 insert into Account (id, name, gender, created) values (2, 'Delinda Perulli', null, '2022-01-18 11:50:58');
 insert into Account (id, name, gender, created) values (3, 'Dillie Yarrall', 'O', '2021-09-10 22:37:09');
 insert into Account (id, name, gender, created) values (4, 'Quintilla Talby', 'M', '2022-01-17 12:14:55');
 insert into Account (id, name, gender, created) values (5, 'Corilla Impey', 'F', '2022-01-06 04:19:37');
-commit transaction;
 ```
 
 ### csv
