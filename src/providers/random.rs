@@ -10,8 +10,9 @@ use crate::{
 	provider::{
 		ProviderCreationData,
 		ProviderImpl,
+		ProviderError,
 	},
-	ProviderError,
+	parser::config::Argument,
 };
 
 pub struct RandomProvider {
@@ -28,14 +29,16 @@ impl ProviderImpl for RandomProvider {
 		} )
 	}
 
-	fn reset(&mut self, arguments: &Vec<String>) -> Result<(), ProviderError> {
-		if arguments.len() < 2 {
-			return Err( ProviderError::TooFewArguments( arguments.len(), 2 ) );
-		}
+	fn reset(&mut self, arguments: &Vec<Argument>) -> Result<(), ProviderError> {
+		todo!()
 
-		self.items = arguments.clone();
+		// if arguments.len() < 2 {
+			// return Err( ProviderError::TooFewArguments( arguments.len(), 2 ) );
+		// }
 
-		Ok(())
+		// self.items = arguments.clone();
+
+		// Ok(())
 	}
 
 	fn provide(&mut self) -> Result<String, ProviderError> {

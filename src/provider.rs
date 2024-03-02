@@ -1,3 +1,5 @@
+use crate::parser::config::Argument;
+
 #[derive(PartialEq, Debug)]
 pub enum ProviderError {
 	/// Used when a provider is already registered under the name {0}
@@ -41,7 +43,7 @@ pub trait ProviderImpl { // {{{
 	///
 	/// - `arguments` A list with arguments for the provider to use for the
 	///   current column
-	fn reset(&mut self, arguments: &Vec<String>) -> Result<(), ProviderError> {
+	fn reset(&mut self, arguments: &Vec<Argument>) -> Result<(), ProviderError> {
 		Ok(())
 	}
 

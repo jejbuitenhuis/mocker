@@ -5,10 +5,13 @@ use rand::{
 #[cfg(test)]
 use rand::rngs::mock::StepRng;
 
-use crate::provider::{
-	ProviderCreationData,
-	ProviderImpl,
-	ProviderError,
+use crate::{
+	provider::{
+		ProviderCreationData,
+		ProviderImpl,
+		ProviderError,
+	},
+	parser::config::Argument,
 };
 
 pub struct NumberProvider {
@@ -36,28 +39,30 @@ impl ProviderImpl for NumberProvider {
 		} )
 	}
 
-	fn reset(&mut self, arguments: &Vec<String>) -> Result<(), ProviderError> {
-		if let Some(min) = arguments.get(0) {
-			self.min = min.parse::<i64>()
-				.map_err( |_| ProviderError::UnexpectedArgument(
-					arguments[0].clone(),
-					"Number".to_string()
-				) )?;
-		} else {
-			self.min = 0;
-		}
+	fn reset(&mut self, arguments: &Vec<Argument>) -> Result<(), ProviderError> {
+		todo!()
 
-		if let Some(max) = arguments.get(1) {
-			self.max = max.parse::<i64>()
-				.map_err( |_| ProviderError::UnexpectedArgument(
-					arguments[1].clone(),
-					"Number".to_string()
-				) )?;
-		} else {
-			self.max = i64::MAX;
-		}
+		// if let Some(min) = arguments.get(0) {
+			// self.min = min.parse::<i64>()
+				// .map_err( |_| ProviderError::UnexpectedArgument(
+					// arguments[0].clone(),
+					// "Number".to_string()
+				// ) )?;
+		// } else {
+			// self.min = 0;
+		// }
 
-		Ok(())
+		// if let Some(max) = arguments.get(1) {
+			// self.max = max.parse::<i64>()
+				// .map_err( |_| ProviderError::UnexpectedArgument(
+					// arguments[1].clone(),
+					// "Number".to_string()
+				// ) )?;
+		// } else {
+			// self.max = i64::MAX;
+		// }
+
+		// Ok(())
 	}
 
 	fn provide(&mut self) -> Result<String, ProviderError> {

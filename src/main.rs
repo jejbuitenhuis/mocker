@@ -10,7 +10,10 @@ use crate::{
 		ColumnData,
 		GeneratorData,
 	},
-	parser::Parser,
+	parser::{
+		errors::ParserError,
+		Parser,
+	},
 	provider::ProviderError,
 	registry::registrars::{
 		register_providers,
@@ -41,9 +44,19 @@ fn main() -> Result<(), ProviderError> {
 	// Initialize mocker and parse config {{{
 	let args = Args::parse();
 	let mut parser = Parser::new(&args.config).unwrap();
-	let config = parser.parse().unwrap();
+	let config = parser.parse();
+
+	if let Err( ParserError::SyntaxError(parsing_error) ) = config {
+		println!("{}", parsing_error);
+
+		std::process::exit(1);
+	}
+
+	let config = config.unwrap();
 
 	println!("{:#?}", config);
+
+	std::process::exit(0);
 
 	let mut provider_registry = register_providers(&args);
 	let mut generator_registry = register_generators(&args);

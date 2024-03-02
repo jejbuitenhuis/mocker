@@ -1,4 +1,101 @@
+use pest::iterators::Pair;
+
 use crate::parser::errors::ParserError;
+use super::Rule;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Argument {
+	Int(usize),
+	Float(isize),
+	String(String),
+	Boolean(bool),
+}
+
+impl Argument {
+	// is implementations {{{
+	pub fn is_int(&self) -> bool {
+		matches!( self, Self::Int(_) )
+	}
+
+	pub fn is_float(&self) -> bool {
+		matches!( self, Self::Float(_) )
+	}
+
+	pub fn is_string(&self) -> bool {
+		matches!( self, Self::String(_) )
+	}
+
+	pub fn is_boolean(&self) -> bool {
+		matches!( self, Self::Boolean(_) )
+	}
+	// }}}
+
+	// try_from implementations {{{
+	fn try_from_int_rule(rule: Pair<Rule>) -> Result<Self, ParserError> {
+		let value = rule.as_span()
+			.as_str();
+		let value = value.parse()
+			.map_err( |_| ParserError::Unexpected(
+				value.to_string(),
+				"int".to_string(),
+			) )?;
+
+		Ok( Self::Int(value) )
+	}
+
+	fn try_from_float_rule(rule: Pair<Rule>) -> Result<Self, ParserError> {
+		let value = rule.as_span()
+			.as_str();
+		let value = value.parse()
+			.map_err( |_| ParserError::Unexpected(
+				value.to_string(),
+				"float".to_string(),
+			) )?;
+
+		Ok( Self::Float(value) )
+	}
+
+	fn try_from_string_rule(rule: Pair<Rule>) -> Result<Self, ParserError> {
+		let value = rule.as_span()
+			.as_str()
+			.to_string();
+
+		Ok( Self::String(value) )
+	}
+
+	fn try_from_boolean_rule(rule: Pair<Rule>) -> Result<Self, ParserError> {
+		let value = rule.as_span()
+			.as_str();
+		let value = value.parse()
+			.map_err( |_| ParserError::Unexpected(
+				value.to_string(),
+				"boolean".to_string(),
+			) )?;
+
+		Ok( Self::Boolean(value) )
+	}
+	// }}}
+}
+
+impl TryFrom< Pair<'_, Rule> > for Argument { // {{{
+	type Error = ParserError;
+
+	fn try_from(rule: Pair<Rule>) -> Result<Self, Self::Error> {
+		let parsed_type = match rule.as_rule() {
+			Rule::INT => Self::try_from_int_rule(rule)?,
+			Rule::FLOAT => Self::try_from_float_rule(rule)?,
+			Rule::STRING => Self::try_from_string_rule(rule)?,
+			Rule::BOOLEAN => Self::try_from_boolean_rule(rule)?,
+
+			r => return Err( ParserError::Unexpected(
+				format!("{:?}", r),
+				"valid type".to_string(),
+			) ),
+		};
+
+		Ok(parsed_type)
+	}
+} // }}}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ColumnType {
@@ -13,7 +110,7 @@ pub enum ColumnType {
 impl TryFrom<String> for ColumnType { // {{{
 	type Error = ParserError;
 
-	fn try_from(kind: String) -> Result<ColumnType, Self::Error> {
+	fn try_from(kind: String) -> Result<Self, Self::Error> {
 		match kind.as_str() {
 			"int" => Ok(ColumnType::Int),
 			"long" => Ok(ColumnType::Long),
@@ -27,54 +124,26 @@ impl TryFrom<String> for ColumnType { // {{{
 } // }}}
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Constraint {
-	Primary,
-	/// A null constraint with a percentage (`0` to `100`) of how many times it
-	/// can be null
-	Null(u8),
-	/// A link to another column, possibly in another table
-	Link(String),
+pub struct Constraint {
+	pub name: String,
+	pub arguments: Vec<Argument>,
 }
 
 impl Constraint { // {{{
-	pub fn try_from(name: String, arguments: Vec<String>) -> Result<Constraint, ParserError> {
-		let arg_empty = arguments.is_empty();
-		let arg_count = arguments.len() as usize;
-
-		match name.as_str() {
-			"primary" if arg_empty => Ok(Constraint::Primary),
-			"primary" if !arg_empty => Err( ParserError::TooManyArguments(arg_count, 0) ),
-
-			"null" if arg_count == 1 => {
-				let percentage = arguments[0].parse::<u8>()
-					.map_err( |e| ParserError::Unknown( e.to_string() ) )?;
-
-				Ok( Constraint::Null(percentage) )
-			},
-			"null" if arg_empty => Err( ParserError::TooFewArguments(arg_count, 1) ),
-			"null" => Err( ParserError::TooManyArguments(arg_count, 1) ),
-
-			"link" if arg_count == 1 => Ok( Constraint::Link( arguments[0].clone() ) ),
-			"link" if arg_empty => Err( ParserError::TooFewArguments(arg_count, 1) ),
-			"link" => Err( ParserError::TooManyArguments(arg_count, 1) ),
-
-			_ => Err( ParserError::Unexpected( name, "Constraint".to_string() ) ),
-		}
+	pub fn new(name: String, arguments: Vec<Argument>) -> Self {
+		Self { name, arguments }
 	}
 } // }}}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Provider {
 	pub name: String,
-	pub arguments: Vec<String>,
+	pub arguments: Vec<Argument>,
 }
 
 impl Provider { // {{{
-	pub fn from(name: String, arguments: Vec<String>) -> Result<Provider, ParserError> {
-		Ok(Provider {
-			name,
-			arguments,
-		})
+	pub fn new(name: String, arguments: Vec<Argument>) -> Self {
+		Self { name, arguments }
 	}
 } // }}}
 

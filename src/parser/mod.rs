@@ -1,12 +1,20 @@
-use std::{fs, path::{Path, PathBuf}};
+use std::{ fs, path::PathBuf };
+use pest::{
+	iterators::Pair,
+	Parser as PestParser,
+};
+use pest_derive::Parser as PestParser;
 
-use crate::{
-	parser::{
-		errors::ParserError,
-		config::{
-			Config, Column, Provider, ColumnType, Constraint, Table,
-		},
-		pointer::Pointer,
+use crate::parser::{
+	errors::ParserError,
+	config::{
+		Argument,
+		Config,
+		Column,
+		Provider,
+		ColumnType,
+		Constraint,
+		Table,
 	},
 };
 
@@ -14,13 +22,12 @@ pub mod config;
 pub mod errors;
 mod pointer;
 
-const CHAR_CONSTRAINT: char = '$';
-const CHAR_PROVIDER: char = '#';
-const KEYWORD_TABLE: &str = "table";
+#[derive(PestParser)]
+#[grammar = "parser/mock_table_definition.pest"]
+struct MockerParser;
 
 pub struct Parser {
-	config: Config,
-	pointer: Pointer,
+	file_content: String,
 }
 
 impl Parser {
@@ -28,185 +35,224 @@ impl Parser {
 		let file_content = fs::read_to_string(file)
 			.map_err( |e| ParserError::FileError( e.to_string() ) )?;
 
-		Ok(Parser {
-			config: Config::new(),
-			pointer: Pointer::new(file_content),
-		})
+		Ok(Parser { file_content })
 	} // }}}
 
-	fn parse_whitespace(&mut self) -> Result<(), ParserError> { // {{{
-		while self.pointer.peek()?.is_whitespace() {
-			self.pointer.next()?;
+	fn parse_function_call_args(
+		&self,
+		function_call_args: Pair<Rule>,
+		args: &mut Vec<Argument>,
+	)
+		-> Result<(), ParserError>
+	{ // {{{
+			// Argument::try_from(function_call_item)
+		for argument in function_call_args.into_inner() {
+			match argument.as_rule() {
+				Rule::call_arg => {
+					let arg_rule = argument.into_inner()
+						.next()
+						.expect("function call argument should contain an argument value");
+
+					args.push( Argument::try_from(arg_rule)? );
+				},
+
+				r => unreachable!("Unexpected rule encountered while parsing function_call_args: {:?}", r),
+			}
 		}
 
 		Ok(())
 	} // }}}
 
-	fn parse_constraint(&mut self) -> Result<Constraint, ParserError> { // {{{
-		let constraint_name = self.pointer.next_until(|c| c == &'(')?;
+	fn parse_function_call(
+		&self,
+		function_call: Pair<Rule>,
+		args: &mut Vec<Argument>,
+	) -> Result<(), ParserError> { // {{{
+		for function_call_item in function_call.into_inner() {
+			match function_call_item.as_rule() {
+				Rule::function_call_empty => {}, // no arguments to parse
+				Rule::function_call_args =>
+					self.parse_function_call_args(function_call_item, args)?,
 
-		// skip `(`
-		self.pointer.next()?;
-
-		let constraint_arguments = self.pointer.next_until(|c| c == &')')?
-			.split_terminator(',')
-			.map(str::trim)
-			.map(str::to_string)
-			.collect::< Vec<_> >();
-
-		// skip `)`
-		self.pointer.next()?;
-
-		Ok( Constraint::try_from(constraint_name, constraint_arguments)? )
-	} // }}}
-
-	fn parse_provider(&mut self) -> Result<Provider, ParserError> { // {{{
-		let constraint_name = self.pointer.next_until(|c| c == &'(')?;
-
-		// skip `(`
-		self.pointer.next()?;
-
-		let constraint_arguments = self.pointer.next_until(|c| c == &')')?
-			.split_terminator(',')
-			.map(str::trim)
-			.map(str::to_string)
-			.collect::< Vec<_> >();
-
-		// skip `)`
-		self.pointer.next()?;
-
-		Ok( Provider::from(constraint_name, constraint_arguments)? )
-	} // }}}
-
-	fn parse_columns(&mut self) -> Result<Vec<Column>, ParserError> { // {{{
-		let mut result = vec![];
-
-		self.parse_whitespace()?;
-
-		let next = self.pointer.next()?;
-
-		if next != '{' {
-			return Err( ParserError::Unexpected(
-				next.to_string(),
-				"{".to_string(),
-			) );
-		}
-
-		// loop for parsing a whole column, so from the start (column name) to
-		// the end (a `,` or `}`)
-		loop {
-			self.parse_whitespace()?;
-
-			let column_name = self.pointer.next_until( |c| c.is_whitespace() )?;
-
-			self.parse_whitespace()?;
-
-			let column_type = ColumnType::try_from(
-				self.pointer.next_until( |c| c.is_whitespace() )?
-			)?;
-
-			self.parse_whitespace()?;
-
-			let mut column_constraints: Vec<Constraint> = vec![];
-			let mut column_provider: Option<Provider> = None;
-			let mut char = self.pointer.next()?;
-
-			// loop for parsing the constraints and provider. It loops until it
-			// gets to the end of the column or the end of the table
-			// definition (a `}`)
-			loop {
-				match char {
-					'}' | ',' => break,
-					c if c.is_whitespace() => {}, // skip to next character
-
-					CHAR_CONSTRAINT => column_constraints.push( self.parse_constraint()? ),
-
-					// only one provider is allowed
-					CHAR_PROVIDER if column_provider.is_some() => return Err(ParserError::MultipleProviders),
-					CHAR_PROVIDER if column_provider.is_none() =>
-						column_provider = Some( self.parse_provider()? ),
-
-					c => {
-						return Err( ParserError::Unexpected(
-							c.to_string(),
-							"¯\\_(ツ)_/¯".to_string()
-						) );
-					}
-				}
-
-				char = self.pointer.next()?;
-			}
-
-			let column_provider = column_provider.ok_or(ParserError::NoProvider)?;
-
-			let mut column = Column::new(column_name, column_type, column_provider);
-
-			for constraint in column_constraints {
-				column.add_constraint(constraint);
-			}
-
-			result.push(column);
-
-			// a `,` or `}` was found in the loop above, but we don't know
-			// which one. If it is the `}`, we break out of the loop because we
-			// found all of the columns. If it wasn't a `{`, we can assume it
-			// was a `,` (we filter all other characters above) and we can look
-			// for the next column
-			if char == '}' {
-				break;
+				r => unreachable!("Unexpected rule encountered while parsing function_call_item: {:?}", r),
 			}
 		}
 
-		Ok(result)
+		Ok(())
 	} // }}}
 
-	fn parse_table(&mut self) -> Result<Option<Table>, ParserError> { // {{{
-		match self.parse_whitespace() {
-			Err(e) => match e {
-				ParserError::EOF => return Ok(None), // no more tables follow
-				_ => return Err(e),
-			},
-			_ => (),
-		};
+	fn parse_constraint(&self, constraint: Pair<Rule>)
+		-> Result<Constraint, ParserError>
+	{ // {{{
+		let mut constraint_name: Option<String> = None;
+		let mut constraint_args = Vec::with_capacity(2);
 
-		// "table" keyword
-		let keyword = match self.pointer.next_multiple( KEYWORD_TABLE.len() ) {
-			Ok(k) => k,
-			Err(e) => match e {
-				ParserError::EOF => return Ok(None), // no more tables follow
-				_ => return Err(e),
-			},
-		};
+		for constraint_item in constraint.into_inner() {
+			match constraint_item.as_rule() {
+				Rule::constraint_name => {
+					let name = constraint_item.as_span()
+						.as_str()
+						.to_string();
 
-		if keyword != KEYWORD_TABLE {
-			return Err( ParserError::Unexpected( keyword, KEYWORD_TABLE.to_string() ) )
-		}
+					constraint_name = Some(name);
+				},
+				Rule::function_call =>
+					self.parse_function_call(constraint_item, &mut constraint_args)?,
 
-		self.parse_whitespace()?;
-
-		let table_name = self.pointer.next_until( |c| c.is_whitespace() || c == &'{' )?;
-		let mut table = Table::new(table_name);
-		let columns = self.parse_columns()?;
-
-		for column in columns {
-			table.add_column(column);
-		}
-
-		Ok( Some(table) )
-	} // }}}
-
-	pub fn parse(&mut self) -> Result<&Config, ParserError> { // {{{
-		loop {
-			let table = self.parse_table()?;
-
-			if table.is_none() {
-				break;
+				r => unreachable!("Unexpected rule encountered while parsing constraint: {:?}", r),
 			}
-
-			// never panics, because we checked above
-			self.config.add_table( table.unwrap() );
 		}
 
-		Ok(&self.config)
+		Ok( Constraint::new(
+			constraint_name.expect("no constraint name should be caught by pest.rs"),
+			constraint_args,
+		) )
+	} // }}}
+
+	fn parse_provider(&self, provider: Pair<Rule>)
+		-> Result<Provider, ParserError>
+	{ // {{{
+		let mut provider_name: Option<String> = None;
+		let mut provider_args = Vec::with_capacity(2);
+
+		for provider_item in provider.into_inner() {
+			match provider_item.as_rule() {
+				Rule::provider_name => {
+					let name = provider_item.into_inner()
+						.next()
+						.expect("provider should contain a provider name")
+						.as_str()
+						.to_string();
+
+					provider_name = Some(name);
+				},
+				Rule::function_call =>
+					self.parse_function_call(provider_item, &mut provider_args)?,
+
+				r => unreachable!("Unexpected rule encountered while parsing provider: {:?}", r),
+			}
+		}
+
+		Ok( Provider::new(
+			provider_name.expect("no provider name should be caught by pest.rs"),
+			provider_args,
+		) )
+	} // }}}
+
+	fn parse_column_definition(&self, column_definition: Pair<Rule>)
+		-> Result<Column, ParserError>
+	{ // {{{
+		let mut column_name: Option<String> = None;
+		let mut column_type: Option<ColumnType> = None;
+		let mut constraints = Vec::with_capacity(2);
+		let mut provider: Option<Provider> = None;
+
+		for column_definition_item in column_definition.into_inner() {
+			match column_definition_item.as_rule() {
+				Rule::column_name => {
+					let name = column_definition_item.into_inner()
+						.next()
+						.expect("column_definition should contain a column name")
+						.as_str()
+						.to_string();
+
+					column_name = Some(name);
+				},
+				Rule::r#type => {
+					let r#type = column_definition_item.as_span()
+						.as_str()
+						.to_string();
+					let r#type = ColumnType::try_from(r#type)?;
+
+					column_type = Some(r#type);
+				},
+				Rule::constraint => {
+					constraints.push(
+						self.parse_constraint(column_definition_item)?
+					);
+				},
+				Rule::provider => {
+					provider = Some(
+						self.parse_provider(column_definition_item)?
+					);
+				},
+
+				r => unreachable!("Unexpected rule encountered while parsing column_definition: {:?}", r),
+			}
+		}
+
+		Ok( Column {
+			name: column_name.expect("no column name should be caught by pest.rs"),
+			kind: column_type.expect("no column type should be caught by pest.rs"),
+			constraints,
+			provider: provider.expect("no provider should be caught by pest.rs"),
+		} )
+	} // }}}
+
+	fn parse_table_content(
+		&self,
+		table_content: Pair<Rule>,
+		column_output: &mut Vec<Column>,
+	) -> Result<(), ParserError> { // {{{
+		for column_definition in table_content.into_inner() {
+			match column_definition.as_rule() {
+				Rule::column_definition => {
+					let column = self.parse_column_definition(column_definition)?;
+
+					column_output.push(column);
+				},
+
+				r => unreachable!("Unexpected rule encountered while parsing table_content: {:?}", r),
+			}
+		}
+
+		Ok(())
+	} // }}}
+
+	fn parse_table_definition(&self, definition: Pair<Rule>)
+		-> Result<Table, ParserError>
+	{ // {{{
+		let mut table_name = String::new();
+		let mut table_columns = Vec::with_capacity(5);
+
+		for pair in definition.into_inner() {
+			match pair.as_rule() {
+				Rule::table_definition => {
+					table_name = pair.into_inner()
+						.next()
+						.expect("table_definition should contain a table name")
+						.as_str()
+						.trim()
+						.to_string();
+				},
+				Rule::table_content =>
+					self.parse_table_content(pair, &mut table_columns)?,
+
+				r => unreachable!("Unexpected rule encountered while parsing mock_definition: {:?}", r),
+			}
+		}
+
+		Ok( Table { name: table_name, columns: table_columns } )
+	} // }}}
+
+	pub fn parse(&self) -> Result<Config, ParserError> { // {{{
+		let mut mock_tables = Vec::with_capacity(5);
+
+		let result = MockerParser::parse( Rule::output, self.file_content.as_str() )
+			.map_err( |e| ParserError::SyntaxError( e.to_string() ) )?
+			.next()
+			.ok_or( ParserError::EOF )?;
+
+		for mock_definition in result.into_inner() {
+			let table = self.parse_table_definition(mock_definition)?;
+
+			mock_tables.push(table);
+		}
+
+		let mut config = Config::new();
+
+		config.tables = mock_tables;
+
+		Ok(config)
 	} // }}}
 }

@@ -1,7 +1,10 @@
-use crate::provider::{
-	ProviderCreationData,
-	ProviderImpl,
-	ProviderError,
+use crate::{
+	provider::{
+		ProviderCreationData,
+		ProviderImpl,
+		ProviderError,
+	},
+	parser::config::Argument,
 };
 
 pub struct RowProvider {
@@ -15,7 +18,7 @@ impl ProviderImpl for RowProvider {
 		} )
 	}
 
-	fn reset(&mut self, _arguments: &Vec<String>) -> Result<(), ProviderError> {
+	fn reset(&mut self, _arguments: &Vec<Argument>) -> Result<(), ProviderError> {
 		self.curr_count = 1;
 
 		Ok(())

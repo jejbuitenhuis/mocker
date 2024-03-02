@@ -1,0 +1,74 @@
+WHITESPACE = _{ (" " | "\t" | NEWLINE)+ }
+
+INT = @{ ASCII_DIGIT+ }
+FLOAT = @{ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ }
+CHAR = {
+	!("\"" | "\\") ~ ANY
+	| "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+}
+STRING_CONTENT = @{ CHAR* }
+STRING = ${ "\"" ~ STRING_CONTENT ~ "\"" }
+BOOLEAN = @{ "true" | "false" }
+
+SNAKE_CASE_WORD = @{ (ASCII_ALPHA_LOWER | "_")+ }
+CAMEL_CASE_WORD = @{ ASCII_ALPHA_LOWER ~ ASCII_ALPHA+ }
+PASCAL_CASE_WORD = @{ ASCII_ALPHA_UPPER ~ ASCII_ALPHA+ }
+WORD = @{ ASCII_ALPHA+ }
+WORD_SPECIAL_CHARS = @{ (ASCII_ALPHA | "_")+ }
+
+CALL_START = _{ "(" }
+CALL_END = _{ ")" }
+call_arg = {
+	| INT
+	| FLOAT
+	| STRING
+	| BOOLEAN
+}
+CALL_ARG_SEPERATOR = _{ "," }
+function_call_empty = { CALL_START ~ CALL_END }
+function_call_args = {
+	CALL_START
+	~ call_arg ~ (CALL_ARG_SEPERATOR ~ call_arg)*
+	~ CALL_END
+}
+function_call = { function_call_empty | function_call_args }
+
+type = { ASCII_ALPHA_LOWER+ }
+CONSTRAINT_START = _{ "$" }
+constraint_name = { ASCII_ALPHA_LOWER+ }
+constraint = { CONSTRAINT_START ~ constraint_name ~ function_call }
+
+PROVIDER_START = _{ "#" }
+provider_name = { SNAKE_CASE_WORD }
+provider = { PROVIDER_START ~ provider_name ~ function_call }
+
+COLUMN_SEPERATOR = _{ "," }
+column_name = { WORD_SPECIAL_CHARS }
+column_definition = {
+	column_name
+	~ type
+	~ (constraint)*
+	~ provider
+}
+
+TABLE = _{ "table" }
+table_name = { (WORD | "_")+ }
+
+TABLE_DEFINITION_SPLIT = _{ "," }
+table_definition = {
+	TABLE
+	~ table_name
+}
+TABLE_CONTENT_START = _{ "{" }
+TABLE_CONTENT_END = _{ "}" }
+table_content = {
+	TABLE_CONTENT_START
+	~ column_definition ~ (TABLE_DEFINITION_SPLIT ~ column_definition)*
+	~ TABLE_CONTENT_END
+}
+
+mock_definition = {
+	table_definition ~ table_content
+}
+
+output = { mock_definition+ }

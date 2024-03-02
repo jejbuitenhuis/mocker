@@ -1,5 +1,7 @@
 #[derive(Debug)]
 pub enum ParserError {
+	/// Syntax error
+	SyntaxError(String),
 	/// An unknown error
 	Unknown(String),
 	FileError(String),

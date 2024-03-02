@@ -4,10 +4,13 @@ use rand::{
 #[cfg(test)]
 use rand::rngs::mock::StepRng;
 
-use crate::provider::{
-	ProviderCreationData,
-	ProviderImpl,
-	ProviderError,
+use crate::{
+	provider::{
+		ProviderCreationData,
+		ProviderImpl,
+		ProviderError,
+	},
+	parser::config::Argument,
 };
 
 struct Gender {
@@ -52,18 +55,20 @@ impl ProviderImpl for GenderProvider {
 		} )
 	}
 
-	fn reset(&mut self, arguments: &Vec<String>) -> Result<(), ProviderError> {
-		if let Some(should_be_long) = arguments.get(0) {
-			self.long = should_be_long.parse::<bool>()
-				.map_err( |_| ProviderError::UnexpectedArgument(
-					arguments[0].clone(),
-					"Boolean".to_string(),
-				) )?;
-		} else {
-			self.long = false;
-		}
+	fn reset(&mut self, arguments: &Vec<Argument>) -> Result<(), ProviderError> {
+		todo!()
 
-		Ok(())
+		// if let Some(should_be_long) = arguments.get(0) {
+			// self.long = should_be_long.parse::<bool>()
+				// .map_err( |_| ProviderError::UnexpectedArgument(
+					// arguments[0].clone(),
+					// "Boolean".to_string(),
+				// ) )?;
+		// } else {
+			// self.long = false;
+		// }
+
+		// Ok(())
 	}
 
 	fn provide(&mut self) -> Result<String, ProviderError> {
