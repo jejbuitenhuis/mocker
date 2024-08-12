@@ -20,6 +20,19 @@ pub struct NumberProvider {
 	max: i64,
 }
 
+impl NumberProvider {
+	fn parse_value_from_arg(&self, arg: &Argument) -> Result<i64, ProviderError> {
+		if let Argument::Int(value) = arg {
+			return Ok( value.clone() );
+		}
+
+		Err( ProviderError::UnexpectedArgument(
+			arg.to_string(),
+			"int".to_string(),
+		) )
+	}
+}
+
 impl ProviderImpl for NumberProvider {
 	#[cfg( not(test) )]
 	fn new(data: &ProviderCreationData) -> Result<Self, ProviderError> {
@@ -40,29 +53,22 @@ impl ProviderImpl for NumberProvider {
 	}
 
 	fn reset(&mut self, arguments: &Vec<Argument>) -> Result<(), ProviderError> {
-		todo!()
+		if arguments.is_empty() {
+			self.min = 0;
+			self.max = i64::MAX;
 
-		// if let Some(min) = arguments.get(0) {
-			// self.min = min.parse::<i64>()
-				// .map_err( |_| ProviderError::UnexpectedArgument(
-					// arguments[0].clone(),
-					// "Number".to_string()
-				// ) )?;
-		// } else {
-			// self.min = 0;
-		// }
+			return Ok(());
+		}
 
-		// if let Some(max) = arguments.get(1) {
-			// self.max = max.parse::<i64>()
-				// .map_err( |_| ProviderError::UnexpectedArgument(
-					// arguments[1].clone(),
-					// "Number".to_string()
-				// ) )?;
-		// } else {
-			// self.max = i64::MAX;
-		// }
+		if let Some(min) = arguments.get(0) {
+			self.min = self.parse_value_from_arg(min)?;
+		}
 
-		// Ok(())
+		if let Some(max) = arguments.get(1) {
+			self.max = self.parse_value_from_arg(max)?;
+		}
+
+		Ok(())
 	}
 
 	fn provide(&mut self) -> Result<String, ProviderError> {
@@ -93,7 +99,7 @@ mod tests {
 		let expected = 10;
 		let mut sut = NumberProvider::new(&CREATION_DATA)?;
 
-		sut.reset( &vec![ expected.to_string() ] )?;
+		sut.reset( &vec![ Argument::Int(expected) ] )?;
 
 		assert_eq!(expected, sut.min);
 
@@ -105,7 +111,7 @@ mod tests {
 		let expected = 10;
 		let mut sut = NumberProvider::new(&CREATION_DATA)?;
 
-		sut.reset( &vec![ 5.to_string(), expected.to_string() ] )?;
+		sut.reset( &vec![ Argument::Int(5), Argument::Int(expected) ] )?;
 
 		assert_eq!(expected, sut.max);
 
@@ -117,7 +123,7 @@ mod tests {
 		let expected = 15;
 		let mut sut = NumberProvider::new(&CREATION_DATA)?;
 
-		sut.reset( &vec![ expected.to_string(), 20.to_string() ] )?;
+		sut.reset( &vec![ Argument::Int(expected), Argument::Int(20) ] )?;
 
 		assert_eq!(expected, sut.min);
 
@@ -127,10 +133,10 @@ mod tests {
 	#[test]
 	fn test_reset_should_return_error_when_no_number_is_given_to_minimum() -> Result<(), ProviderError> { // {{{
 		let arg = "abc".to_string();
-		let expected = Err( ProviderError::UnexpectedArgument( arg.clone(), "Number".to_string() ) );
+		let expected = Err( ProviderError::UnexpectedArgument( arg.clone(), "int".to_string() ) );
 		let mut sut = NumberProvider::new(&CREATION_DATA)?;
 
-		let result = sut.reset( &vec![ arg.clone() ] );
+		let result = sut.reset( &vec![ Argument::String(arg) ] );
 
 		assert_eq!(expected, result);
 
@@ -140,10 +146,13 @@ mod tests {
 	#[test]
 	fn test_reset_should_return_error_when_no_number_is_given_to_maximum() -> Result<(), ProviderError> { // {{{
 		let arg = "abc".to_string();
-		let expected = Err( ProviderError::UnexpectedArgument( arg.clone(), "Number".to_string() ) );
+		let expected = Err( ProviderError::UnexpectedArgument( arg.clone(), "int".to_string() ) );
 		let mut sut = NumberProvider::new(&CREATION_DATA)?;
 
-		let result = sut.reset( &vec![ 5.to_string(), arg.clone() ] );
+		let result = sut.reset( &vec![
+			Argument::Int(5),
+			Argument::String(arg),
+		] );
 
 		assert_eq!(expected, result);
 
@@ -154,7 +163,7 @@ mod tests {
 	fn test_reset_should_set_min_to_default_when_no_arguments_are_given() -> Result<(), ProviderError> { // {{{
 		let mut sut = NumberProvider::new(&CREATION_DATA)?;
 
-		sut.reset( &vec![ 5.to_string(), 10.to_string() ] )?;
+		sut.reset( &vec![ Argument::Int(5), Argument::Int(10) ] )?;
 
 		sut.reset( &vec![] )?;
 
@@ -167,7 +176,7 @@ mod tests {
 	fn test_reset_should_set_max_to_default_when_no_arguments_are_given() -> Result<(), ProviderError> { // {{{
 		let mut sut = NumberProvider::new(&CREATION_DATA)?;
 
-		sut.reset( &vec![ 5.to_string(), 10.to_string() ] )?;
+		sut.reset( &vec![ Argument::Int(5), Argument::Int(10) ] )?;
 
 		sut.reset( &vec![] )?;
 

@@ -1,13 +1,31 @@
-use std::collections::HashMap;
 use std::fs::File;
 
-use crate::parser::config::ColumnType;
+use crate::parser::config::{ Argument, ColumnType };
+
+#[derive(Clone)]
+pub enum CellValue {
+	Int(i64),
+	Float(f64),
+	String(String),
+	Boolean(bool),
+}
+
+impl From<&Argument> for CellValue {
+	fn from(arg: &Argument) -> Self {
+		match arg {
+			Argument::Int(value) => Self::Int( value.clone() ),
+			Argument::Float(value) => Self::Float( value.clone() ),
+			Argument::String(value) => Self::String( value.clone() ),
+			Argument::Boolean(value) => Self::Boolean( value.clone() ),
+		}
+	}
+}
 
 #[derive(Clone, Debug)]
 pub struct ColumnData {
 	pub name: String,
 	pub r#type: ColumnType,
-	pub data: Vec<String>,
+	pub data: Vec<String>, // TODO: replace with CellValue enum
 }
 
 pub type GeneratorData = Vec<ColumnData>;

@@ -70,6 +70,7 @@ mod tests {
 	use std::fs;
 
 	use super::*;
+	use crate::parser::config::Argument;
 
 	const CREATION_DATA: ProviderCreationData = ProviderCreationData { row_count: 1000 };
 	lazy_static! {
@@ -80,6 +81,9 @@ mod tests {
 			"Name 4".to_string(),
 			"Name 5".to_string(),
 		];
+		static ref ARGUMENTS: Vec<Argument> = NAMES.iter()
+			.map( |arg| Argument::String( arg.clone() ) )
+			.collect();
 	}
 
 	fn setup() {
@@ -96,7 +100,7 @@ mod tests {
 
 		let mut sut = FirstNameProvider::new(&CREATION_DATA)?;
 
-		sut.reset(&NAMES)?;
+		sut.reset(&ARGUMENTS)?;
 
 		let result = sut.provide()?;
 

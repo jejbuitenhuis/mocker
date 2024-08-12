@@ -56,24 +56,26 @@ impl ProviderImpl for GenderProvider {
 	}
 
 	fn reset(&mut self, arguments: &Vec<Argument>) -> Result<(), ProviderError> {
-		todo!()
+		if let Some(should_be_long_arg) = arguments.get(0) {
+			match should_be_long_arg {
+				Argument::Boolean(should_be_long) => {
+					self.long = *should_be_long;
+				},
+				arg => return Err( ProviderError::UnexpectedArgument(
+					arg.to_string(),
+					"Boolean".to_string(),
+				) ),
+			}
+		} else {
+			self.long = false;
+		}
 
-		// if let Some(should_be_long) = arguments.get(0) {
-			// self.long = should_be_long.parse::<bool>()
-				// .map_err( |_| ProviderError::UnexpectedArgument(
-					// arguments[0].clone(),
-					// "Boolean".to_string(),
-				// ) )?;
-		// } else {
-			// self.long = false;
-		// }
-
-		// Ok(())
+		Ok(())
 	}
 
 	fn provide(&mut self) -> Result<String, ProviderError> {
 		let gender = GENDER_LIST.choose(&mut self.rng)
-			.expect("GENDER_LIST is empty");
+			.expect("GENDER_LIST should not be empty");
 
 		if self.long {
 			Ok( format!("'{}'", gender.long) )
@@ -106,7 +108,7 @@ mod tests {
 		let expected = format!( "'{}'", GENDER_LIST[0].long );
 		let mut sut = GenderProvider::new(&CREATION_DATA)?;
 
-		sut.reset( &vec![ "true".to_string() ] )?;
+		sut.reset( &vec![ Argument::Boolean(true) ] )?;
 
 		assert_eq!( expected, sut.provide()? );
 
@@ -117,7 +119,7 @@ mod tests {
 	fn test_reset_should_set_long_to_default_when_no_arguments_are_given() -> Result<(), ProviderError> { // {{{
 		let mut sut = GenderProvider::new(&CREATION_DATA)?;
 
-		sut.reset( &vec![ "true".to_string() ] )?;
+		sut.reset( &vec![ Argument::Boolean(true) ] )?;
 
 		sut.reset( &vec![] )?;
 
@@ -132,7 +134,7 @@ mod tests {
 		let expected = Err( ProviderError::UnexpectedArgument( arg.clone(), "Boolean".to_string() ) );
 		let mut sut = GenderProvider::new(&CREATION_DATA)?;
 
-		let result = sut.reset( &vec![ arg.clone() ] );
+		let result = sut.reset( &vec![ Argument::String( arg.clone() ) ] );
 
 		assert_eq!(expected, result);
 

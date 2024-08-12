@@ -47,16 +47,14 @@ fn main() -> Result<(), ProviderError> {
 	let config = parser.parse();
 
 	if let Err( ParserError::SyntaxError(parsing_error) ) = config {
-		println!("{}", parsing_error);
+		println!("Syntax error: {}", parsing_error);
 
 		std::process::exit(1);
 	}
 
 	let config = config.unwrap();
 
-	println!("{:#?}", config);
-
-	std::process::exit(0);
+	println!("Parsed config: {:#?}", config);
 
 	let mut provider_registry = register_providers(&args);
 	let mut generator_registry = register_generators(&args);
@@ -95,7 +93,9 @@ fn main() -> Result<(), ProviderError> {
 		);
 	}
 
-	println!("{:#?}", generated_data);
+	println!("Generated data: {:#?}", generated_data);
+
+	std::process::exit(0);
 	// }}}
 
 	// generate output {{{

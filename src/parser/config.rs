@@ -1,35 +1,18 @@
 use pest::iterators::Pair;
+use std::fmt;
 
 use crate::parser::errors::ParserError;
 use super::Rule;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Argument {
-	Int(usize),
-	Float(isize),
+	Int(i64),
+	Float(f64),
 	String(String),
 	Boolean(bool),
 }
 
 impl Argument {
-	// is implementations {{{
-	pub fn is_int(&self) -> bool {
-		matches!( self, Self::Int(_) )
-	}
-
-	pub fn is_float(&self) -> bool {
-		matches!( self, Self::Float(_) )
-	}
-
-	pub fn is_string(&self) -> bool {
-		matches!( self, Self::String(_) )
-	}
-
-	pub fn is_boolean(&self) -> bool {
-		matches!( self, Self::Boolean(_) )
-	}
-	// }}}
-
 	// try_from implementations {{{
 	fn try_from_int_rule(rule: Pair<Rule>) -> Result<Self, ParserError> {
 		let value = rule.as_span()
@@ -94,6 +77,19 @@ impl TryFrom< Pair<'_, Rule> > for Argument { // {{{
 		};
 
 		Ok(parsed_type)
+	}
+} // }}}
+
+impl fmt::Display for Argument { // {{{
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		let value: String = match self {
+			Self::Int(i) => format!("{}", i),
+			Self::Float(f) => format!("{}", f),
+			Self::String(s) => format!("{}", s),
+			Self::Boolean(b) => format!("{}", b),
+		};
+
+		write!(f, "{}", value)
 	}
 } // }}}
 
