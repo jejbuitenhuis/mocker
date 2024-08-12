@@ -1,4 +1,7 @@
-use crate::parser::config::Argument;
+use crate::{
+	generator::CellValue,
+	parser::config::Argument,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum ProviderError {
@@ -49,5 +52,5 @@ pub trait ProviderImpl { // {{{
 
 	/// Gets called every time a row is created. Should return the item for the
 	/// cell in the row as a [`String`].
-	fn provide(&mut self) -> Result<String, ProviderError>;
+	fn provide(&mut self) -> Result<CellValue, ProviderError>;
 } // }}}

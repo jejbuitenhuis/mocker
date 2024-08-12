@@ -22,7 +22,7 @@ pub struct RandomProvider {
 }
 
 impl ProviderImpl for RandomProvider {
-	fn new(data: &ProviderCreationData) -> Result<Self, ProviderError> {
+	fn new(_data: &ProviderCreationData) -> Result<Self, ProviderError> {
 		Ok( Self {
 			#[cfg( not(test) )] rng: Box::new( rand::thread_rng() ),
 			#[cfg(test)] rng: Box::new( StepRng::new(0, 1) ),
@@ -42,11 +42,10 @@ impl ProviderImpl for RandomProvider {
 		Ok(())
 	}
 
-	fn provide(&mut self) -> Result<String, ProviderError> {
+	fn provide(&mut self) -> Result<CellValue, ProviderError> {
 		let selected = self.rng.gen_range( 0..self.items.len() );
 
-		Ok( "TODO".to_string() )
-		// Ok( self.items[selected].clone() )
+		Ok( self.items[selected].clone() )
 	}
 }
 
@@ -74,7 +73,10 @@ mod tests {
 
 		let result = sut.provide()?;
 
-		assert_eq!( "Item 1".to_string(), result );
+		assert_eq!(
+			CellValue::String( "Item 1".to_string() ),
+			result,
+		);
 
 		Ok(())
 	} // }}}

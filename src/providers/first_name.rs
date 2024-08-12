@@ -14,10 +14,13 @@ use std::{
 	tempdir,
 };
 
-use crate::provider::{
-	ProviderCreationData,
-	ProviderImpl,
-	ProviderError,
+use crate::{
+	generator::CellValue,
+	provider::{
+		ProviderCreationData,
+		ProviderImpl,
+		ProviderError,
+	},
 };
 
 #[cfg(test)]
@@ -42,11 +45,11 @@ pub struct FirstNameProvider {
 }
 
 impl ProviderImpl for FirstNameProvider {
-	fn new(args: &ProviderCreationData) -> Result<Self, ProviderError> {
+	fn new(_data: &ProviderCreationData) -> Result<Self, ProviderError> {
 		let items = fs::read_to_string( get_file() )
 			.map_err( |e| ProviderError::Unknown( e.to_string() ) )?
 			.lines()
-			.map( |l| format!("\"{}\"", l) )
+			.map(String::from)
 			.collect();
 
 		Ok( Self {
@@ -57,10 +60,12 @@ impl ProviderImpl for FirstNameProvider {
 		} )
 	}
 
-	fn provide(&mut self) -> Result<String, ProviderError> {
+	fn provide(&mut self) -> Result<CellValue, ProviderError> {
 		let selected = self.rng.gen_range( 0..self.items.len() );
 
-		Ok( self.items[selected].clone() )
+		Ok(
+			CellValue::String( self.items[selected].clone() )
+		)
 	}
 }
 
@@ -104,7 +109,10 @@ mod tests {
 
 		let result = sut.provide()?;
 
-		assert_eq!( "\"Name 1\"".to_string(), result );
+		assert_eq!(
+			CellValue::String( "Name 1".to_string() ),
+			result,
+		);
 
 		Ok(())
 	} // }}}

@@ -6,6 +6,7 @@ use rand::{
 use rand::rngs::mock::StepRng;
 
 use crate::{
+	generator::CellValue,
 	provider::{
 		ProviderCreationData,
 		ProviderImpl,
@@ -35,7 +36,7 @@ impl NumberProvider {
 
 impl ProviderImpl for NumberProvider {
 	#[cfg( not(test) )]
-	fn new(data: &ProviderCreationData) -> Result<Self, ProviderError> {
+	fn new(_data: &ProviderCreationData) -> Result<Self, ProviderError> {
 		Ok( NumberProvider {
 			rng: Box::new( rand::thread_rng() ),
 			min: 0,
@@ -44,7 +45,7 @@ impl ProviderImpl for NumberProvider {
 	}
 
 	#[cfg(test)]
-	fn new(data: &ProviderCreationData) -> Result<Self, ProviderError> {
+	fn new(_data: &ProviderCreationData) -> Result<Self, ProviderError> {
 		Ok( Self {
 			rng: Box::new( StepRng::new(0, 1) ),
 			min: 0,
@@ -71,8 +72,10 @@ impl ProviderImpl for NumberProvider {
 		Ok(())
 	}
 
-	fn provide(&mut self) -> Result<String, ProviderError> {
-		Ok( self.rng.gen_range(self.min..=self.max).to_string() )
+	fn provide(&mut self) -> Result<CellValue, ProviderError> {
+		let value = self.rng.gen_range(self.min..=self.max);
+
+		Ok( CellValue::Int(value) )
 	}
 }
 
@@ -89,7 +92,7 @@ mod tests {
 
 		let result = sut.provide()?;
 
-		assert_eq!( "0".to_string(), result );
+		assert_eq!( CellValue::Int(0), result );
 
 		Ok(())
 	} // }}}

@@ -94,8 +94,6 @@ fn main() -> Result<(), ProviderError> {
 	}
 
 	println!("Generated data: {:#?}", generated_data);
-
-	std::process::exit(0);
 	// }}}
 
 	// generate output {{{
@@ -135,6 +133,8 @@ fn main() -> Result<(), ProviderError> {
 			.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
 	}
 	// }}}
+
+	println!("Done generating data files!");
 
 	Ok(())
 }

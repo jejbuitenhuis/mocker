@@ -1,4 +1,5 @@
 use crate::{
+	generator::CellValue,
 	provider::{
 		ProviderCreationData,
 		ProviderImpl,
@@ -8,11 +9,11 @@ use crate::{
 };
 
 pub struct RowProvider {
-	curr_count: usize,
+	curr_count: u64,
 }
 
 impl ProviderImpl for RowProvider {
-	fn new(data: &ProviderCreationData) -> Result<Self, ProviderError> {
+	fn new(_data: &ProviderCreationData) -> Result<Self, ProviderError> {
 		Ok( RowProvider {
 			curr_count: 1,
 		} )
@@ -24,12 +25,12 @@ impl ProviderImpl for RowProvider {
 		Ok(())
 	}
 
-	fn provide(&mut self) -> Result<String, ProviderError> {
+	fn provide(&mut self) -> Result<CellValue, ProviderError> {
 		let temp = self.curr_count;
 
 		self.curr_count += 1;
 
-		Ok( temp.to_string() )
+		Ok( CellValue::UnsignedInt(temp) )
 	}
 }
 
@@ -47,7 +48,7 @@ mod tests {
 
 		let result = sut.provide()?;
 
-		assert_eq!( "1".to_string(), result );
+		assert_eq!( CellValue::UnsignedInt(1), result );
 
 		Ok(())
 	} // }}}
@@ -65,7 +66,7 @@ mod tests {
 
 		let result = sut.provide()?;
 
-		assert_eq!( "5".to_string(), result );
+		assert_eq!( CellValue::UnsignedInt(5), result );
 
 		Ok(())
 	} // }}}
@@ -85,7 +86,7 @@ mod tests {
 
 		let result = sut.provide()?;
 
-		assert_eq!( "1".to_string(), result );
+		assert_eq!( CellValue::UnsignedInt(1), result );
 
 		Ok(())
 	} // }}}

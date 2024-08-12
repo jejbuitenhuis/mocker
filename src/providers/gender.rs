@@ -5,6 +5,7 @@ use rand::{
 use rand::rngs::mock::StepRng;
 
 use crate::{
+	generator::CellValue,
 	provider::{
 		ProviderCreationData,
 		ProviderImpl,
@@ -40,7 +41,7 @@ pub struct GenderProvider {
 
 impl ProviderImpl for GenderProvider {
 	#[cfg( not(test) )]
-	fn new(data: &ProviderCreationData) -> Result<Self, ProviderError> {
+	fn new(_data: &ProviderCreationData) -> Result<Self, ProviderError> {
 		Ok( Self {
 			rng: Box::new( rand::thread_rng() ),
 			long: false,
@@ -48,7 +49,7 @@ impl ProviderImpl for GenderProvider {
 	}
 
 	#[cfg(test)]
-	fn new(data: &ProviderCreationData) -> Result<Self, ProviderError> {
+	fn new(_data: &ProviderCreationData) -> Result<Self, ProviderError> {
 		Ok( Self {
 			rng: Box::new( StepRng::new(0, 1) ),
 			long: false,
@@ -73,15 +74,17 @@ impl ProviderImpl for GenderProvider {
 		Ok(())
 	}
 
-	fn provide(&mut self) -> Result<String, ProviderError> {
+	fn provide(&mut self) -> Result<CellValue, ProviderError> {
 		let gender = GENDER_LIST.choose(&mut self.rng)
 			.expect("GENDER_LIST should not be empty");
 
-		if self.long {
-			Ok( format!("'{}'", gender.long) )
+		let value = if self.long {
+			gender.long.to_string()
 		} else {
-			Ok( format!("'{}'", gender.short) )
-		}
+			gender.short.to_string()
+		};
+
+		Ok( CellValue::String( value.to_string() ) )
 	}
 }
 
@@ -93,7 +96,7 @@ mod tests {
 
 	#[test]
 	fn test_provide_returns_gender() -> Result<(), ProviderError> { // {{{
-		let expected = format!( "'{}'", GENDER_LIST[0].short );
+		let expected = CellValue::String( GENDER_LIST[0].short.to_string() );
 		let mut sut = GenderProvider::new(&CREATION_DATA)?;
 
 		sut.reset( &vec![] )?;
@@ -105,7 +108,7 @@ mod tests {
 
 	#[test]
 	fn test_provide_returns_long_gender() -> Result<(), ProviderError> { // {{{
-		let expected = format!( "'{}'", GENDER_LIST[0].long );
+		let expected = CellValue::String( GENDER_LIST[0].long.to_string() );
 		let mut sut = GenderProvider::new(&CREATION_DATA)?;
 
 		sut.reset( &vec![ Argument::Boolean(true) ] )?;
