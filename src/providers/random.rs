@@ -64,7 +64,6 @@ mod tests {
 		];
 	}
 
-	#[ignore = "provide() hasn't been migrated to the new type system yet"]
 	#[test]
 	fn test_provide_should_return_the_first_item() -> Result<(), ProviderError> { // {{{
 		let mut sut = RandomProvider::new(&CREATION_DATA)?;
