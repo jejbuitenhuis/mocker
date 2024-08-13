@@ -1,3 +1,4 @@
+use log::debug;
 use std::{
 	fs::File,
 	io::Write,
@@ -23,6 +24,8 @@ pub struct TsqlGenerator {
 
 impl TsqlGenerator {
 	fn write_to_output(&mut self, data: String) -> Result<(), GeneratorError> { // {{{
+		// TODO: something like this to write less frequently:
+		// https://rust-cli.github.io/book/tutorial/output.html#a-note-on-printing-performance ?
 		self.output_file.as_ref()
 			.unwrap()
 			.write( data.as_bytes() )
@@ -47,7 +50,7 @@ impl TsqlGenerator {
 	} // }}}
 
 	fn generate_row(&mut self, rows: &Vec<&CellValue>) -> Result<(), GeneratorError> { // {{{
-		println!("writing data: {:?}", rows);
+		debug!("writing data: {:?}", rows);
 
 		self.write_to_output( self.columns.clone() )?;
 

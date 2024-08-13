@@ -9,7 +9,9 @@ edition = "2021"
 anyhow = "1.0.86"
 
 clap = { version = "3.1.18", features = [ "derive" ] }
+env_logger = "0.11.5"
 lazy_static = "1.4.0"
+log = "0.4.22"
 pest = "2.7.7"
 pest_derive = "2.7.7"
 rand = "0.8.5"

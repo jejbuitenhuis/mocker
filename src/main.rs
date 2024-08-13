@@ -1,6 +1,7 @@
 use anyhow::Context;
 use clap::Parser as CliParser;
 use lazy_static::lazy_static;
+use log::{ debug, info };
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -37,12 +38,14 @@ lazy_static! { // {{{
 } // }}}
 
 fn main() -> anyhow::Result<()> {
+	env_logger::init();
+
 	// Initialize mocker and parse config {{{
 	let args = Args::parse();
 	let parser = Parser::new(&args.config)?;
 	let config = parser.parse()?;
 
-	println!("Parsed config: {:#?}", config);
+	debug!("Parsed config: {:#?}", config);
 
 	let mut provider_registry = register_providers(&args);
 	let mut generator_registry = register_generators(&args);
@@ -81,7 +84,7 @@ fn main() -> anyhow::Result<()> {
 		);
 	}
 
-	println!("Generated data: {:#?}", generated_data);
+	debug!("Generated data: {:#?}", generated_data);
 	// }}}
 
 	// generate output {{{
@@ -100,7 +103,7 @@ fn main() -> anyhow::Result<()> {
 			file_extension.clone(),
 		) );
 
-		println!("Using file '{}' for table '{}'", output_file_name.display(), table);
+		info!("Using file '{}' for table '{}'", output_file_name.display(), table);
 
 		let output_file = fs::File::create( output_file_name.clone() )?;
 
@@ -114,7 +117,7 @@ fn main() -> anyhow::Result<()> {
 	}
 	// }}}
 
-	println!("Done generating data files!");
+	info!("Done generating data files!");
 
 	Ok(())
 }
