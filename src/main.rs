@@ -1,4 +1,3 @@
-use anyhow::Context;
 use clap::Parser as CliParser;
 use lazy_static::lazy_static;
 use log::{ debug, info };
@@ -47,8 +46,8 @@ fn main() -> anyhow::Result<()> {
 
 	debug!("Parsed config: {:#?}", config);
 
-	let mut provider_registry = register_providers(&args);
-	let mut generator_registry = register_generators(&args);
+	let mut provider_registry = register_providers(&args)?;
+	let mut generator_registry = register_generators(&args)?;
 	// }}}
 
 	// Generate mock data {{{

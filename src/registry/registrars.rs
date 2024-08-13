@@ -18,51 +18,57 @@ use crate::{
 		GeneratorImpl,
 	},
 	generators::tsql::TsqlGenerator,
-	registry::Registry,
+	registry::{ Registry, RegistryError },
 };
 
-pub fn register_providers(args: &Args) -> Registry< Box<dyn ProviderImpl>, ProviderCreationData, ProviderError> {
+pub fn register_providers(args: &Args) -> Result<
+	Registry< Box<dyn ProviderImpl>, ProviderCreationData, ProviderError>,
+	RegistryError<ProviderError>,
+> {
 	let creation_data = ProviderCreationData {
 		row_count: args.row_count,
 	};
 
-	let mut registry: Registry< Box<dyn ProviderImpl>, _, ProviderError>
+	let mut registry: Registry< Box<dyn ProviderImpl>, _, _ >
 		= Registry::new(creation_data);
 
 	registry.register(
 		"row",
 		|args| Ok( Box::new( RowProvider::new(args)? ) ),
-	).unwrap();
+	)?;
 	registry.register(
 		"number",
 		|args| Ok( Box::new( NumberProvider::new(args)? ) ),
-	).unwrap();
+	)?;
 	registry.register(
 		"gender",
 		|args| Ok( Box::new( GenderProvider::new(args)? ) ),
-	).unwrap();
+	)?;
 	registry.register(
 		"random",
 		|args| Ok( Box::new( RandomProvider::new(args)? ) ),
-	).unwrap();
+	)?;
 	registry.register(
 		"first_name",
 		|args| Ok( Box::new( FirstNameProvider::new(args)? ) ),
-	).unwrap();
+	)?;
 
-	registry
+	Ok(registry)
 }
 
-pub fn register_generators<'a>(args: &Args) -> Registry< Box<dyn GeneratorImpl>, GeneratorCreationData, GeneratorError> {
+pub fn register_generators<'a>(_args: &Args) -> Result<
+	Registry< Box<dyn GeneratorImpl>, GeneratorCreationData, GeneratorError>,
+	RegistryError<GeneratorError>,
+> {
 	let creation_data = GeneratorCreationData {};
 
-	let mut registry: Registry< Box<dyn GeneratorImpl>, _, GeneratorError>
+	let mut registry: Registry< Box<dyn GeneratorImpl>, _, _ >
 		= Registry::new(creation_data);
 
 	registry.register(
 		"tsql",
-		|args| Ok( Box::new( TsqlGenerator::new()? ) ),
-	).unwrap();
+		|_args| Ok( Box::new( TsqlGenerator::new()? ) ),
+	)?;
 
-	registry
+	Ok(registry)
 }

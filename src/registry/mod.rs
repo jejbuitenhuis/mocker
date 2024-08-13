@@ -15,11 +15,11 @@ pub enum RegistryError<E> {
 	Unknown(String),
 }
 
-type Create<R, D, E> = fn(data: &D) -> Result<R, E>;
+type CreateFn<R, D, E> = fn(data: &D) -> Result<R, E>;
 
 pub struct Registry<R, D, E> {
 	creation_data: D,
-	creators: HashMap< String, Create<R, D, E> >,
+	creators: HashMap< String, CreateFn<R, D, E> >,
 	items: HashMap<String, R>,
 }
 
@@ -61,7 +61,7 @@ impl<R, D, E> Registry<R, D, E> {
 		Ok(item)
 	}
 
-	pub fn register(&mut self, name: impl ToString, creator: Create<R, D, E>) -> Result< (), RegistryError<E> > {
+	pub fn register(&mut self, name: impl ToString, creator: CreateFn<R, D, E>) -> Result< (), RegistryError<E> > {
 		let name = name.to_string();
 
 		if self.creators.contains_key(&name) {
