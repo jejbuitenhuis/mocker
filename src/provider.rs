@@ -7,26 +7,14 @@ use crate::{
 
 #[derive(PartialEq, Debug, Error)]
 pub enum ProviderError {
-	/// Used when a provider is already registered under the name {0}
-	#[error("provider named '{0}' is already registered")]
-	AlreadyRegistered(String),
-
 	/// Used when an argument given to a [`ProviderImpl`] is not correct.
 	/// `Unexpected {0}, expected {1}`
 	#[error("unexpected argument '{0}', expected {1}")]
 	UnexpectedArgument(String, String),
 
-	/// Used when the provider {0} is not registered in the [`ProviderRegistry`]
-	#[error("unknown provider '{0}'")]
-	UnknownProvider(String),
-
 	/// Used when too few arguments are given ({0}), but {1} were expected
 	#[error("{0} arguments were given, but at least {1} were expected")]
 	TooFewArguments(usize, usize),
-
-	/// Used when too many arguments are given ({0}), but {1} were expected
-	#[error("{0} arguments were given, but at most {1} were expected")]
-	TooManyArguments(usize, usize),
 
 	/// Unknown error {0}
 	#[error("an unknown error occurred: {0}")]
@@ -54,7 +42,7 @@ pub trait ProviderImpl { // {{{
 	///
 	/// - `arguments` A list with arguments for the provider to use for the
 	///   current column
-	fn reset(&mut self, arguments: &Vec<Argument>) -> Result<(), ProviderError> {
+	fn reset(&mut self, _arguments: &Vec<Argument>) -> Result<(), ProviderError> {
 		Ok(())
 	}
 

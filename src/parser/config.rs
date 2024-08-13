@@ -152,17 +152,13 @@ pub struct Column {
 }
 
 impl Column { // {{{
-	pub fn new(name: String, kind: ColumnType, provider: Provider) -> Column {
-		Column {
-			name,
-			kind,
-			constraints: vec![],
-			provider,
-		}
-	}
-
-	pub fn add_constraint(&mut self, constraint: Constraint) {
-		self.constraints.push(constraint);
+	pub fn new(
+		name: String,
+		kind: ColumnType,
+		constraints: Vec<Constraint>,
+		provider: Provider,
+	) -> Column {
+		Self { name, kind, constraints, provider }
 	}
 }
 // }}}
@@ -174,15 +170,8 @@ pub struct Table {
 }
 
 impl Table { // {{{
-	pub fn new(name: String) -> Table {
-		Table {
-			name,
-			columns: vec![],
-		}
-	}
-
-	pub fn add_column(&mut self, column: Column) {
-		self.columns.push(column);
+	pub fn new(name: String, columns: Vec<Column>) -> Table {
+		Self { name, columns }
 	}
 }
 // }}}
@@ -195,7 +184,7 @@ pub struct Config {
 impl Config { // {{{
 	pub fn new() -> Config {
 		Config {
-			tables: vec![],
+			tables: Vec::with_capacity(5),
 		}
 	}
 

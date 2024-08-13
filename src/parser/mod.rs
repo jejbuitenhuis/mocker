@@ -20,7 +20,6 @@ use crate::parser::{
 
 pub mod config;
 pub mod errors;
-mod pointer;
 
 #[derive(PestParser)]
 #[grammar = "parser/mock_table_definition.pest"]
@@ -181,12 +180,12 @@ impl Parser {
 			}
 		}
 
-		Ok( Column {
-			name: column_name.expect("no column name should be caught by pest.rs"),
-			kind: column_type.expect("no column type should be caught by pest.rs"),
+		Ok( Column::new(
+			column_name.expect("no column name should be caught by pest.rs"),
+			column_type.expect("no column type should be caught by pest.rs"),
 			constraints,
-			provider: provider.expect("no provider should be caught by pest.rs"),
-		} )
+			provider.expect("no provider should be caught by pest.rs"),
+		) )
 	} // }}}
 
 	fn parse_table_content(
@@ -232,11 +231,11 @@ impl Parser {
 			}
 		}
 
-		Ok( Table { name: table_name, columns: table_columns } )
+		Ok( Table::new(table_name, table_columns) )
 	} // }}}
 
 	pub fn parse(&self) -> Result<Config, ParserError> { // {{{
-		let mut mock_tables = Vec::with_capacity(5);
+		let mut config = Config::new();
 
 		let result = MockerParser::parse( Rule::output, self.file_content.as_str() )
 			.map_err( |e| ParserError::SyntaxError( e.to_string() ) )?
@@ -246,12 +245,8 @@ impl Parser {
 		for mock_definition in result.into_inner() {
 			let table = self.parse_table_definition(mock_definition)?;
 
-			mock_tables.push(table);
+			config.add_table(table);
 		}
-
-		let mut config = Config::new();
-
-		config.tables = mock_tables;
 
 		Ok(config)
 	} // }}}

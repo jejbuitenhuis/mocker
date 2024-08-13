@@ -35,19 +35,6 @@ pub type GeneratorData = Vec<ColumnData>;
 
 #[derive(Debug, Error)]
 pub enum GeneratorError { // {{{
-	/// Used when a generator is already registered under the name {0}.
-	#[error("generator named '{0}' is already registered")]
-	AlreadyRegistered(String),
-
-	/// Used when the output file {0} already exists.
-	#[error("the output file '{0}' already exists")]
-	FileAlreadyExists(String),
-
-	/// Used when for some reason the check in the args let an unknown
-	/// generator named {0} through.
-	#[error("unknown generator '{0}'")]
-	UnknownGenerator(String),
-
 	// TODO: Add generator name?
 	/// Used when a generator is asked to generate data, but it's not
 	/// initialized.
