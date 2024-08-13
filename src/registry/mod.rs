@@ -1,12 +1,17 @@
+use thiserror::Error;
 use std::collections::HashMap;
 
 pub mod registrars;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum RegistryError<E> {
+	#[error("Duplicate item '{0}'")]
 	DuplicateItem(String),
+	#[error("Unknown creator '{0}'")]
 	UnknownCreator(String),
+	#[error("Error while creating: {0}")]
 	CreationError(E),
+	#[error("An unknown error occurred: {0}")]
 	Unknown(String),
 }
 

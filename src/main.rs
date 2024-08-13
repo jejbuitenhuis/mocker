@@ -1,3 +1,4 @@
+use anyhow::Context;
 use clap::Parser as CliParser;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
@@ -10,11 +11,7 @@ use crate::{
 		ColumnData,
 		GeneratorData,
 	},
-	parser::{
-		errors::ParserError,
-		Parser,
-	},
-	provider::ProviderError,
+	parser::Parser,
 	registry::registrars::{
 		register_providers,
 		register_generators,
@@ -39,20 +36,11 @@ lazy_static! { // {{{
 	};
 } // }}}
 
-// FIXME: Change `ProviderError` to a more generic error
-fn main() -> Result<(), ProviderError> {
+fn main() -> anyhow::Result<()> {
 	// Initialize mocker and parse config {{{
 	let args = Args::parse();
-	let mut parser = Parser::new(&args.config).unwrap();
-	let config = parser.parse();
-
-	if let Err( ParserError::SyntaxError(parsing_error) ) = config {
-		println!("Syntax error: {}", parsing_error);
-
-		std::process::exit(1);
-	}
-
-	let config = config.unwrap();
+	let parser = Parser::new(&args.config)?;
+	let config = parser.parse()?;
 
 	println!("Parsed config: {:#?}", config);
 
@@ -70,9 +58,9 @@ fn main() -> Result<(), ProviderError> {
 
 		for column in &table.columns {
 			let mut rows = Vec::with_capacity(args.row_count);
-			let provider = provider_registry.get( column.provider.name.clone() )
-				// FIXME: Change `ProviderError` to a more generic error
-				.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
+			let provider = provider_registry.get(
+				column.provider.name.clone()
+			)?;
 
 			provider.reset(&column.provider.arguments)?;
 
@@ -103,9 +91,7 @@ fn main() -> Result<(), ProviderError> {
 		// file extension
 		.unwrap_or( &args.r#type.as_str() )
 		.to_string();
-	let generator = generator_registry.get( args.r#type.clone() )
-		// FIXME: Change `ProviderError` to a more generic error
-		.map_err( |_| ProviderError::Unknown( "Unknown generator".to_string() ) )?;
+	let generator = generator_registry.get( args.r#type.clone() )?;
 
 	for (table, data) in generated_data.into_iter() {
 		let output_file_name = output_dir.join( format!(
@@ -116,21 +102,15 @@ fn main() -> Result<(), ProviderError> {
 
 		println!("Using file '{}' for table '{}'", output_file_name.display(), table);
 
-		let output_file = fs::File::create( output_file_name.clone() )
-			// FIXME: Change `ProviderError` to a more generic error
-			.map_err( |e| ProviderError::Unknown( e.to_string() ) )?;
+		let output_file = fs::File::create( output_file_name.clone() )?;
 
 		generator.init(
 			table,
 			args.row_count,
 			output_file,
-		)
-			// FIXME: Change `ProviderError` to a more generic error
-			.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
+		)?;
 
-		generator.generate(data)
-			// FIXME: Change `ProviderError` to a more generic error
-			.map_err( |e| ProviderError::Unknown( format!("{:?}", e) ) )?;
+		generator.generate(data)?;
 	}
 	// }}}
 

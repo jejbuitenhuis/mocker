@@ -1,4 +1,5 @@
 use std::fs::File;
+use thiserror::Error;
 
 use crate::parser::config::{ Argument, ColumnType };
 
@@ -32,23 +33,29 @@ pub struct ColumnData {
 
 pub type GeneratorData = Vec<ColumnData>;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum GeneratorError { // {{{
 	/// Used when a generator is already registered under the name {0}.
+	#[error("generator named '{0}' is already registered")]
 	AlreadyRegistered(String),
 
 	/// Used when the output file {0} already exists.
+	#[error("the output file '{0}' already exists")]
 	FileAlreadyExists(String),
 
 	/// Used when for some reason the check in the args let an unknown
 	/// generator named {0} through.
+	#[error("unknown generator '{0}'")]
 	UnknownGenerator(String),
 
+	// TODO: Add generator name?
 	/// Used when a generator is asked to generate data, but it's not
 	/// initialized.
+	#[error("uninitialized generator")]
 	Uninitialized,
 
 	/// Used when something goes wrong while writing to the output file.
+	#[error("something went wrong while writing data to the output file: {0}")]
 	Write(String),
 } // }}}
 
