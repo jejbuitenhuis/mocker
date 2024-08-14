@@ -9,7 +9,7 @@ syntax match mockComment "//.*$"
 syntax keyword mockBoolean true false
 syntax match mockNumber "-\?\d\+"
 
-syntax keyword mockType int long float double string bool
+syntax keyword mockType int uint float boolean string
 
 syntax region mockString start="\"" end="\"" skip="\\\"" contains=mockCharacter
 syntax match mockCharacter "\\." contained

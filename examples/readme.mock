@@ -1,9 +1,9 @@
 table TestTable{
-	some_column int $primary() #row(),
+	some_column uint $primary() #row(),
 	can_be_empty int $null(25) #number(0, 1000)
 }
 
 table SecondTable {
-	id int #link("TestTable.some_column"),
+	id uint #link("TestTable.some_column"),
 	another_column string #name()
 }

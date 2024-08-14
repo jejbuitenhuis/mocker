@@ -1,7 +1,11 @@
 use std::fs::File;
 use thiserror::Error;
 
-use crate::parser::config::{ Argument, ColumnType };
+use crate::parser::config::{
+	self as Types,
+	Argument,
+	ColumnType,
+};
 
 #[derive(Clone, Debug)]
 #[cfg_attr( test, derive(PartialEq) )]
@@ -13,7 +17,7 @@ pub enum CellValue {
 	Boolean(bool),
 }
 
-impl From<&Argument> for CellValue {
+impl From<&Argument> for CellValue { // {{{
 	fn from(arg: &Argument) -> Self {
 		match arg {
 			Argument::Int(value) => Self::Int( value.clone() ),
@@ -22,7 +26,25 @@ impl From<&Argument> for CellValue {
 			Argument::Boolean(value) => Self::Boolean( value.clone() ),
 		}
 	}
-}
+} // }}}
+
+impl std::fmt::Display for CellValue { // {{{
+	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+		macro_rules! write_type {
+			($key: expr, $value: expr) => {
+				write!(f, "{}[{}]", $key, $value)
+			}
+		}
+
+		match self {
+			Self::Int(value) => write_type!(Types::KEY_COLUMN_TYPE_INT, value),
+			Self::UnsignedInt(value) => write_type!(Types::KEY_COLUMN_TYPE_UNSIGNED_INT, value),
+			Self::Float(value) => write_type!(Types::KEY_COLUMN_TYPE_FLOAT, value),
+			Self::Boolean(value) => write_type!(Types::KEY_COLUMN_TYPE_BOOLEAN, value),
+			Self::String(value) => write_type!(Types::KEY_COLUMN_TYPE_STRING, value),
+		}
+	}
+} // }}}
 
 #[derive(Clone, Debug)]
 pub struct ColumnData {

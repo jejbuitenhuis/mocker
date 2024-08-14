@@ -1,8 +1,11 @@
 use pest::iterators::Pair;
 use std::fmt;
 
-use crate::parser::errors::ParserError;
-use super::Rule;
+use crate::generator::CellValue;
+use super::{
+	errors::ParserError,
+	Rule,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Argument {
@@ -95,26 +98,53 @@ impl fmt::Display for Argument { // {{{
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ColumnType {
+	Int,
+	UnsignedInt,
+	Float,
+	Boolean,
 	/// String type with a max length of {0}
 	String(usize),
-	Int,
-	Long,
-	Float,
-	Double,
 }
+
+// ColumnType static text strings {{{
+pub const KEY_COLUMN_TYPE_INT: &'static str = "int";
+pub const KEY_COLUMN_TYPE_UNSIGNED_INT: &'static str = "uint";
+pub const KEY_COLUMN_TYPE_FLOAT: &'static str = "float";
+pub const KEY_COLUMN_TYPE_BOOLEAN: &'static str = "bool";
+pub const KEY_COLUMN_TYPE_STRING: &'static str = "string";
+// }}}
 
 impl TryFrom<String> for ColumnType { // {{{
 	type Error = ParserError;
 
 	fn try_from(kind: String) -> Result<Self, Self::Error> {
 		match kind.as_str() {
-			"int" => Ok(ColumnType::Int),
-			"long" => Ok(ColumnType::Long),
-			"float" => Ok(ColumnType::Float),
-			"double" => Ok(ColumnType::Double),
+			KEY_COLUMN_TYPE_INT => Ok(ColumnType::Int),
+			KEY_COLUMN_TYPE_UNSIGNED_INT => Ok(ColumnType::UnsignedInt),
+			KEY_COLUMN_TYPE_FLOAT => Ok(ColumnType::Float),
+			KEY_COLUMN_TYPE_BOOLEAN => Ok(ColumnType::Boolean),
 			// TODO: Make string length variable
-			"string" => Ok( ColumnType::String(usize::MAX) ),
+			KEY_COLUMN_TYPE_STRING => Ok( ColumnType::String(usize::MAX) ),
+
 			_ => Err( ParserError::Unexpected( kind, "Type".to_string() ) ),
+		}
+	}
+} // }}}
+
+impl std::fmt::Display for ColumnType { // {{{
+	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+		macro_rules! write_key {
+			($key: expr) => {
+				write!(f, "{}", $key)
+			}
+		}
+
+		match self {
+			Self::Int => write_key!(KEY_COLUMN_TYPE_INT),
+			Self::UnsignedInt => write_key!(KEY_COLUMN_TYPE_UNSIGNED_INT),
+			Self::Float => write_key!(KEY_COLUMN_TYPE_FLOAT),
+			Self::Boolean => write_key!(KEY_COLUMN_TYPE_BOOLEAN),
+			Self::String(max_length) => write!(f, "{}({})", KEY_COLUMN_TYPE_STRING, max_length),
 		}
 	}
 } // }}}
@@ -159,6 +189,21 @@ impl Column { // {{{
 		provider: Provider,
 	) -> Column {
 		Self { name, kind, constraints, provider }
+	}
+
+	pub fn compatible_with_cell_value(&self, cell_value: &CellValue) -> bool {
+		// Move to https://github.com/rust-lang/rust/issues/51114 ?
+		match (self.kind, cell_value) {
+			( ColumnType::Int, CellValue::Int(_) ) => true,
+			( ColumnType::UnsignedInt, CellValue::UnsignedInt(_) ) => true,
+			( ColumnType::Float, CellValue::Int(_) ) => true,
+			( ColumnType::Boolean, CellValue::Boolean(_) ) => true,
+
+			( ColumnType::String(max_length), CellValue::String(value) )
+				if value.len() <= max_length => true,
+
+			_ => false,
+		}
 	}
 }
 // }}}

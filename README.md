@@ -12,12 +12,12 @@ To start mocking data, you need to create a mock file like the one below. For mo
 
 ```mock
 table TestTable {
-	some_column int $primary() #row(),
+	some_column uint $primary() #row(),
 	can_be_empty int $null(25) #number(0, 1000)
 }
 
 table SecondTable {
-	id int #link("TestTable.some_column"),
+	id uint #link("TestTable.some_column"),
 	another_column string #name()
 }
 ```
@@ -46,7 +46,7 @@ The output of the following config when ran with `mocker --row-count 5 --type <l
 
 ```mock
 table Account {
-	id int $primary() #row(),
+	id uint $primary() #row(),
 	name string(128) #name(),
 	gender string(1) $null(25) #gender(),
 	created date_time #date_time()
@@ -158,9 +158,9 @@ table TableName {
 ## Types
 
 - `int`
-- `long`
+- `uint`
 - `float`
-- `double`
+- `boolean`
 - `string`
 
 ### Planned types

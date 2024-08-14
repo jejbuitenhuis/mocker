@@ -1,11 +1,11 @@
 table FirstTable {
-	id int #row(),
+	id uint #row(),
 	gender string #gender(),
 	random_number int #number(0, 1000)
 }
 
 table SecondTable {
-	id int #row(),
+	id uint #row(),
 	gender string #gender(),
 	random_number int #number(100, 110)
 }

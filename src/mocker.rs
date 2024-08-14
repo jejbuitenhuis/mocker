@@ -8,10 +8,10 @@ use std::{
 use crate::{
 	arguments::Args,
 	parser::{
-		errors::ParserError,
 		config::Config,
 		Parser,
 	},
+	provider::ProviderError,
 	generator::{ ColumnData, GeneratorData },
 	registry::registrars::{
 		register_providers,
@@ -40,7 +40,7 @@ impl<'a> Mocker<'a> {
 		Self { args }
 	}
 
-	pub fn parse_config(&self) -> Result<Config, ParserError> { // {{{
+	pub fn parse_config(&self) -> anyhow::Result<Config> { // {{{
 		let parser = Parser::new(&self.args.config)?;
 		let config = parser.parse()?;
 
@@ -49,7 +49,7 @@ impl<'a> Mocker<'a> {
 		Ok(config)
 	} // }}}
 
-	pub fn generate_mock_data(&self, config: Config) -> Result< MockData, anyhow::Error > { // {{{
+	pub fn generate_mock_data(&self, config: Config) -> anyhow::Result<MockData> { // {{{
 		let mut provider_registry = register_providers(&self.args)?;
 
 		let mut generated_data: HashMap< String, GeneratorData >
@@ -68,7 +68,18 @@ impl<'a> Mocker<'a> {
 				provider.reset(&column.provider.arguments)?;
 
 				for _ in 0..self.args.row_count {
-					rows.push( provider.provide()? );
+					let provided_value = provider.provide()?;
+
+					if !column.compatible_with_cell_value(&provided_value) {
+						let error = ProviderError::IncompatibleType(
+							column.kind,
+							provided_value,
+						);
+
+						return Err( anyhow::anyhow!(error) );
+					}
+
+					rows.push(provided_value);
 				}
 
 				columns.push( ColumnData {
@@ -89,7 +100,7 @@ impl<'a> Mocker<'a> {
 		Ok(generated_data)
 	} // }}}
 
-	pub fn write_mock_data(&self, generated_data: MockData) -> Result<(), anyhow::Error> { // {{{
+	pub fn write_mock_data(&self, generated_data: MockData) -> anyhow::Result<()> { // {{{
 		let mut generator_registry = register_generators(&self.args)?;
 
 		let output_dir = Path::new(&self.args.output);

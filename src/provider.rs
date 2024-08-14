@@ -2,22 +2,28 @@ use thiserror::Error;
 
 use crate::{
 	generator::CellValue,
-	parser::config::Argument,
+	parser::config::{ Argument, ColumnType },
 };
 
-#[derive(PartialEq, Debug, Error)]
+#[derive(Debug, Error)]
+#[cfg_attr( test, derive(PartialEq) )]
 pub enum ProviderError {
 	/// Used when an argument given to a [`ProviderImpl`] is not correct.
 	/// `Unexpected {0}, expected {1}`
-	#[error("unexpected argument '{0}', expected {1}")]
+	#[error("Unexpected argument '{0}', expected {1}")]
 	UnexpectedArgument(String, String),
 
 	/// Used when too few arguments are given ({0}), but {1} were expected
 	#[error("{0} arguments were given, but at least {1} were expected")]
 	TooFewArguments(usize, usize),
 
+	/// Used when a provider generates a certain value type ({0}), but the
+	/// column the data goes to wants another type ({1})
+	#[error("Incompatible types. Provider provided '{1}', but '{0}' was needed")]
+	IncompatibleType(ColumnType, CellValue),
+
 	/// Unknown error {0}
-	#[error("an unknown error occurred: {0}")]
+	#[error("An unknown error occurred: {0}")]
 	Unknown(String),
 }
 
